@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 import csv
 import os
+import tkinter.filedialog as fd
+import pandas as pd
 
 # Nome do arquivo CSV
 ARQUIVO_CSV = "registros.csv"
@@ -14,6 +16,7 @@ def carregar_registros():
         reader = csv.DictReader(file)
         return list(reader)
 
+
 # Função para salvar os registros no CSV
 def salvar_registros(registros):
     with open(ARQUIVO_CSV, mode="w", newline="") as file:
@@ -25,7 +28,7 @@ def salvar_registros(registros):
 def iniciar_registros():
     registros_root = tk.Tk()
     registros_root.title("Cadastro de Registros")
-    registros_root.geometry("800x400")  # Tamanho da janela
+    registros_root.geometry("1000x500")  # Tamanho da janela
     registros_root.resizable(False, False)
 
     # Lista de registros
@@ -106,6 +109,81 @@ def iniciar_registros():
         # Exibe mensagem de sucesso
         messagebox.showinfo("Sucesso", "Registros apagados com sucesso!")
 
+    # Função para importar usuários de um arquivo Excel
+    def importar_excel():
+        # Abrir uma janela para selecionar o arquivo Excel
+        caminho_arquivo = fd.askopenfilename(
+            title="Selecione um arquivo Excel",
+            filetypes=(("Arquivos Excel", "*.xlsx"), ("Todos os arquivos", "*.*"))
+        )
+        if not caminho_arquivo:
+            return  # Caso o usuário cancele a seleção
+
+        try:
+            # Ler o arquivo Excel
+            dados = pd.read_excel(caminho_arquivo)
+
+            # Verificar se as colunas obrigatórias existem
+            if not {"Nome", "Matricula", "Setor"}.issubset(dados.columns):
+                messagebox.showerror("Erro", "O arquivo deve conter as colunas: Nome, Matricula e Setor!")
+                return
+
+            # Processar cada linha do Excel
+            novos_registros = []
+            for _, linha in dados.iterrows():
+                nome = str(linha["Nome"]).strip()
+                matricula = str(linha["Matricula"]).strip()
+                setor = str(linha.get("Setor", "")).strip()  # Setor é opcional
+
+                # Validar campos obrigatórios
+                if not nome or not matricula:
+                    continue  # Ignorar linhas inválidas
+
+                # Verificar duplicidade de matrícula
+                if not matricula_unica(matricula):
+                    continue  # Ignorar matrículas duplicadas
+
+                # Criar um novo registro
+                novo_registro = {
+                    "ID": proximo_id(),
+                    "Nome": nome,
+                    "Matricula": matricula,
+                    "Setor": setor
+                }
+                registros.append(novo_registro)
+                novos_registros.append(novo_registro)
+
+            # Salvar os novos registros no CSV
+            salvar_registros(registros)
+
+            # Atualizar a lista exibida
+            atualizar_lista()
+
+            # Exibir mensagem de sucesso
+            if novos_registros:
+                messagebox.showinfo("Sucesso", f"{len(novos_registros)} usuários foram importados com sucesso!")
+            else:
+                messagebox.showinfo("Atenção", "Nenhum usuário foi importado. Verifique os dados no arquivo Excel.")
+
+        except Exception as e:
+            messagebox.showerror("Erro", f"Falha ao importar o arquivo Excel: {e}")
+
+    # Função para salvar o modelo de importação
+    def salvar_modelo_excel():
+        try:
+            # Define os dados do modelo
+            colunas = ["Nome", "Matricula", "Setor"]
+            modelo_df = pd.DataFrame(columns=colunas)
+
+            # Salva o arquivo Excel
+            caminho_arquivo = "Modelo de importação.xlsx"
+            modelo_df.to_excel(caminho_arquivo, index=False)
+
+            # Exibe mensagem de sucesso
+            messagebox.showinfo("Sucesso", f"O modelo foi salvo como '{caminho_arquivo}' no diretório atual.")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Falha ao salvar o modelo: {e}")
+
     # Layout do lado esquerdo
     frame_esquerdo = tk.Frame(registros_root)
     frame_esquerdo.pack(side="left", fill="y", padx=10, pady=10)
@@ -145,6 +223,8 @@ def iniciar_registros():
     tk.Button(frame_direito, text="Salvar", command=salvar_registro, width=20).pack(pady=10)
     tk.Button(frame_direito, text="Apagar", command=apagar_registro, width=20).pack(pady=10)
     tk.Button(frame_direito, text="Fechar", command=registros_root.destroy, width=20).pack(pady=10)
+    tk.Button(frame_direito, text="Importar Excel", command=importar_excel, width=20).pack(pady=10)
+    tk.Button(frame_direito, text="Salvar Modelo Excel", command=salvar_modelo_excel, width=20).pack(pady=10)
 
     # Atualiza a lista ao iniciar
     atualizar_lista()
