@@ -1,87 +1,94 @@
-import serial
-import time
-import csv
-from datetime import datetime
+from Interface import iniciar_interface
 
-# Configuração da porta serial
-ser = serial.Serial(
-    port="COM6",       # Substitua pela porta correta
-    baudrate=4800,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    bytesize=serial.EIGHTBITS,
-    timeout=1          # Timeout de 1 segundo
-)
+# Lógica principal para comunicação com o dispositivo
+def executar_teste():
+    import serial
+    import time
+    import csv
+    from datetime import datetime
 
-# Função para enviar comandos ao dispositivo
-def enviar_comando(comando):
-    comando_completo = f"{comando}\r\n"
-    ser.write(comando_completo.encode('ascii'))
-    print(f"Comando enviado: {comando_completo}")
+    # Configuração da porta serial
+    ser = serial.Serial(
+        port="COM6",       # Substitua pela porta correta
+        baudrate=4800,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        bytesize=serial.EIGHTBITS,
+        timeout=1          # Timeout de 1 segundo
+    )
 
-# Função para ler resposta do dispositivo
-def ler_resposta():
-    resposta = ser.readline().decode('ascii').strip()
-    print(f"Resposta recebida: {resposta}")
-    return resposta
+    # Função para enviar comandos ao dispositivo
+    def enviar_comando(comando):
+        comando_completo = f"{comando}\r\n"
+        ser.write(comando_completo.encode('ascii'))
+        print(f"Comando enviado: {comando_completo}")
 
-# Função para salvar resultados no CSV
-def salvar_resultado(data_hora, resultado, valor, status):
-    with open("resultados.csv", mode="a", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow([data_hora, resultado, valor, status])
-    print("Resultado salvo com sucesso!")
+    # Função para ler resposta do dispositivo
+    def ler_resposta():
+        resposta = ser.readline().decode('ascii').strip()
+        print(f"Resposta recebida: {resposta}")
+        return resposta
 
-# Fluxo principal
-try:
-    # Envia comando para ligar o dispositivo
-    enviar_comando("$START")
+    # Função para salvar resultados no CSV
+    def salvar_resultado(data_hora, resultado, valor, status):
+        with open("resultados.csv", mode="a", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow([data_hora, resultado, valor, status])
+        print("Resultado salvo com sucesso!")
 
-    while True:
-        resposta = ler_resposta()
+    # Fluxo principal
+    try:
+        # Envia comando para ligar o dispositivo
+        enviar_comando("$START")
 
-        if resposta == "$WAIT":
-            print("Aquecendo o dispositivo, aguardando próximo estado...")
-            time.sleep(1)
+        while True:
+            resposta = ler_resposta()
 
-        elif resposta == "$STANBY":
-            print("Dispositivo em standby, aguardando acionamento...")
-            time.sleep(1)
+            if resposta == "$WAIT":
+                print("Aquecendo o dispositivo, aguardando próximo estado...")
+                time.sleep(1)
 
-        elif resposta == "$TRIGGER":
-            print("Amostra de ar ativada, aguardando resultado...")
-            time.sleep(1)
+            elif resposta == "$STANBY":
+                print("Dispositivo em standby, aguardando acionamento...")
+                time.sleep(1)
 
-        elif resposta.startswith("$RESULT"):
-            print("Resultado recebido!")
-            # Processa o resultado
-            resultado_bruto = resposta.split(",")[1]  # Exemplo: 0.000-OK
-            valor, status = resultado_bruto.split("-")
-            salvar_resultado(datetime.now(), resposta, valor, status)
-            break
+            elif resposta == "$TRIGGER":
+                print("Amostra de ar ativada, aguardando resultado...")
+                time.sleep(1)
 
-        elif resposta == "$BREATH":
-            print("Coleta de ar concluída.")
+            elif resposta.startswith("$RESULT"):
+                print("Resultado recebido!")
+                # Processa o resultado
+                resultado_bruto = resposta.split(",")[1]  # Exemplo: 0.000-OK
+                valor, status = resultado_bruto.split("-")
+                salvar_resultado(datetime.now(), resposta, valor, status)
+                break
 
-        elif resposta == "$FLOW,ERR":
-            print("Erro no fluxo de ar, tente novamente.")
-            break
+            elif resposta == "$BREATH":
+                print("Coleta de ar concluída.")
 
-        elif resposta == "$BAT,LOW":
-            print("Bateria baixa! Verifique o dispositivo.")
-            break
+            elif resposta == "$FLOW,ERR":
+                print("Erro no fluxo de ar, tente novamente.")
+                break
 
-        elif resposta == "$SENSOR,ERR":
-            print("Erro no sensor, dispositivo pode precisar de manutenção.")
-            break
+            elif resposta == "$BAT,LOW":
+                print("Bateria baixa! Verifique o dispositivo.")
+                break
 
-        elif resposta == "$TIME,OUT":
-            print("Tempo para o teste expirou.")
-            break
+            elif resposta == "$SENSOR,ERR":
+                print("Erro no sensor, dispositivo pode precisar de manutenção.")
+                break
 
-        else:
-            print(f"Resposta inesperada: {resposta}")
-            time.sleep(1)
+            elif resposta == "$TIME,OUT":
+                print("Tempo para o teste expirou.")
+                break
 
-finally:
-    ser.close()
+            else:
+                print(f"Resposta inesperada: {resposta}")
+                time.sleep(1)
+
+    finally:
+        ser.close()
+
+if __name__ == "__main__":
+    iniciar_interface()
