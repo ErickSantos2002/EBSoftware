@@ -121,7 +121,10 @@ def iniciar_registros():
 
         try:
             # Ler o arquivo Excel
-            dados = pd.read_excel(caminho_arquivo)
+            dados = pd.read_excel(caminho_arquivo, dtype=str)
+
+            # Substituir valores NaN por strings vazias
+            dados.fillna("", inplace=True)
 
             # Verificar se as colunas obrigatórias existem
             if not {"Nome", "Matricula", "Setor"}.issubset(dados.columns):
@@ -130,6 +133,7 @@ def iniciar_registros():
 
             # Processar cada linha do Excel
             novos_registros = []
+            erros = []
             for _, linha in dados.iterrows():
                 nome = str(linha["Nome"]).strip()
                 matricula = str(linha["Matricula"]).strip()
@@ -137,11 +141,13 @@ def iniciar_registros():
 
                 # Validar campos obrigatórios
                 if not nome or not matricula:
-                    continue  # Ignorar linhas inválidas
+                    erros.append({"Nome": nome, "Matricula": matricula, "Setor": setor, "Erro": "Nome ou Matrícula ausente"})
+                    continue
 
                 # Verificar duplicidade de matrícula
                 if not matricula_unica(matricula):
-                    continue  # Ignorar matrículas duplicadas
+                    erros.append({"Nome": nome, "Matricula": matricula, "Setor": setor, "Erro": "Matrícula duplicada"})
+                    continue
 
                 # Criar um novo registro
                 novo_registro = {
@@ -159,11 +165,30 @@ def iniciar_registros():
             # Atualizar a lista exibida
             atualizar_lista()
 
-            # Exibir mensagem de sucesso
-            if novos_registros:
-                messagebox.showinfo("Sucesso", f"{len(novos_registros)} usuários foram importados com sucesso!")
+            # Gerar a planilha com erros (se existirem)
+            if erros:
+                df_erros = pd.DataFrame(erros)
+                caminho_erros = "Erros_Importacao.xlsx"
+                df_erros.to_excel(caminho_erros, index=False)
+
+            # Exibir o erro_window com botão "Verificar Erros" se houver erros
+            if erros:
+                def abrir_erros():
+                    os.startfile(caminho_erros)  # Abrir o arquivo Excel com os erros
+
+                # Criar o messagebox personalizado
+                erro_window = tk.Toplevel()
+                erro_window.title("Resultado da Importação")
+                if novos_registros:
+                    tk.Label(erro_window, text=f"{len(novos_registros)} usuários foram importados com sucesso!").pack(pady=10)
+                else:
+                    tk.Label(erro_window, text="Nenhum usuário foi importado.").pack(pady=10)
+                tk.Label(erro_window, text=f"{len(erros)} usuários não foram adicionados devido a erros.").pack(pady=10)
+                tk.Button(erro_window, text="Verificar Erros", command=lambda: [abrir_erros(), erro_window.destroy()]).pack(pady=5)
+                tk.Button(erro_window, text="OK", command=erro_window.destroy).pack(pady=5)
             else:
-                messagebox.showinfo("Atenção", "Nenhum usuário foi importado. Verifique os dados no arquivo Excel.")
+                # Apenas exibe o número de registros importados com sucesso, sem erros
+                messagebox.showinfo("Sucesso", f"{len(novos_registros)} usuários foram importados com sucesso!")
 
         except Exception as e:
             messagebox.showerror("Erro", f"Falha ao importar o arquivo Excel: {e}")
@@ -175,25 +200,76 @@ def iniciar_registros():
             colunas = ["Nome", "Matricula", "Setor"]
             modelo_df = pd.DataFrame(columns=colunas)
 
+            # Abrir janela para escolher o local de salvamento com nome padrão
+            caminho_arquivo = fd.asksaveasfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Arquivos Excel", "*.xlsx")],
+                title="Salvar modelo de importação",
+                initialfile="Modelo_Cadastro_EBS.xlsx"  # Nome padrão do arquivo
+            )
+
+            if not caminho_arquivo:  # Se o usuário cancelar, não faz nada
+                return
+
             # Salva o arquivo Excel
-            caminho_arquivo = "Modelo de importação.xlsx"
             modelo_df.to_excel(caminho_arquivo, index=False)
 
             # Exibe mensagem de sucesso
-            messagebox.showinfo("Sucesso", f"O modelo foi salvo como '{caminho_arquivo}' no diretório atual.")
+            messagebox.showinfo("Sucesso", f"O modelo foi salvo em '{caminho_arquivo}'.")
         except Exception as e:
             messagebox.showerror("Erro", f"Falha ao salvar o modelo: {e}")
+
+    # Função para ordenar os registros
+    ordem_atual = {"ID": True, "Nome": True, "Matricula": True, "Setor": True}  # Define a ordem inicial como crescente
+
+    def ordenar_por(coluna):
+        nonlocal registros  # Indica que estamos usando a variável 'registros' do escopo externo
+        ordem = ordem_atual[coluna]
+        registros = sorted(registros, key=lambda r: r[coluna], reverse=not ordem)
+        ordem_atual[coluna] = not ordem  # Alterna a ordem
+        atualizar_lista()
+
+    # Função para pesquisar registros
+    def pesquisar_registros(event=None):
+        termo = entrada_pesquisa.get().strip().lower()
+        if not termo:
+            atualizar_lista()  # Se o campo de pesquisa estiver vazio, mostra todos os registros
+            return
+
+        # Filtra os registros com base no termo
+        registros_filtrados = [
+            r for r in registros if
+            termo in r["ID"].lower() or
+            termo in r["Nome"].lower() or
+            termo in r["Matricula"].lower() or
+            termo in r["Setor"].lower()
+        ]
+
+        # Atualiza a exibição com os registros filtrados
+        tree.delete(*tree.get_children())
+        for registro in registros_filtrados:
+            tree.insert("", "end", values=(registro["ID"], registro["Nome"], registro["Matricula"], registro["Setor"]))
 
     # Layout do lado esquerdo
     frame_esquerdo = tk.Frame(registros_root)
     frame_esquerdo.pack(side="left", fill="y", padx=10, pady=10)
 
+    # Campo de pesquisa acima da lista
+    frame_pesquisa = tk.Frame(registros_root)
+    frame_pesquisa.pack(side="top", fill="x", padx=10, pady=5)
+
+    tk.Label(frame_pesquisa, text="Pesquisar:").pack(side="left")
+    entrada_pesquisa = tk.Entry(frame_pesquisa, width=30)
+    entrada_pesquisa.pack(side="left", padx=5)
+    entrada_pesquisa.bind("<KeyRelease>", pesquisar_registros)  # Atualiza a pesquisa enquanto o usuário digita
+
     # Tabela para exibir os registros
     tree = ttk.Treeview(frame_esquerdo, columns=("ID", "Nome", "Matricula", "Setor"), show="headings")
-    tree.heading("ID", text="ID")
-    tree.heading("Nome", text="Nome")
-    tree.heading("Matricula", text="Matrícula")
-    tree.heading("Setor", text="Setor")
+    # Configuração dos cabeçalhos clicáveis para ordenação
+    tree.heading("ID", text="ID", command=lambda: ordenar_por("ID"))
+    tree.heading("Nome", text="Nome", command=lambda: ordenar_por("Nome"))
+    tree.heading("Matricula", text="Matrícula", command=lambda: ordenar_por("Matricula"))
+    tree.heading("Setor", text="Setor", command=lambda: ordenar_por("Setor"))
     tree.column("ID", width=50)
     tree.column("Nome", width=150)
     tree.column("Matricula", width=100)
