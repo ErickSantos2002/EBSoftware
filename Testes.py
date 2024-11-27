@@ -34,23 +34,39 @@ def ler_resposta():
 
 # Função para obter o próximo ID de teste
 def proximo_id_teste():
+    # Se o arquivo não existir, cria com o cabeçalho inicial
     if not os.path.exists(ARQUIVO_RESULTADOS):
-        with open(ARQUIVO_RESULTADOS, mode="w", newline="") as file:
+        with open(ARQUIVO_RESULTADOS, mode="w", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=[
-                "ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Resultado do teste de álcool"
+                "ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Quantidade de Álcool", "Status"
             ])
             writer.writeheader()
-        return 1
-    with open(ARQUIVO_RESULTADOS, mode="r", newline="") as file:
-        reader = csv.DictReader(file)
-        ids = [int(row["ID do teste"]) for row in reader if row["ID do teste"].isdigit()]
-        return max(ids) + 1 if ids else 1
+        return 1  # Primeiro ID
 
-# Função para salvar resultados no CSV
+    # Ler o arquivo para obter os IDs existentes
+    with open(ARQUIVO_RESULTADOS, mode="r", newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        try:
+            # Filtra e converte os IDs existentes
+            ids = [int(row["ID do teste"]) for row in reader if row["ID do teste"].isdigit()]
+            return max(ids) + 1 if ids else 1  # Retorna o próximo ID
+        except KeyError:
+            # Caso o arquivo não tenha o cabeçalho correto, recria o arquivo
+            with open(ARQUIVO_RESULTADOS, mode="w", newline="", encoding="utf-8") as file:
+                writer = csv.DictWriter(file, fieldnames=[
+                    "ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Quantidade de Álcool", "Status"
+                ])
+                writer.writeheader()
+            return 1
+        
 def salvar_resultado(id_teste, id_usuario, nome, matricula, setor, data_hora, resultado):
-    with open(ARQUIVO_RESULTADOS, mode="a", newline="") as file:
+    # Extrai quantidade e status do resultado
+    quantidade, status = resultado.split("-")  # Exemplo: "0.000-OK" ou "1.125-HIGH"
+    
+    # Salva no CSV com as colunas separadas
+    with open("Resultados.csv", mode="a", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        writer.writerow([id_teste, id_usuario, nome, matricula, setor, data_hora, resultado])
+        writer.writerow([id_teste, id_usuario, nome, matricula, setor, data_hora, quantidade, status])
     print("Resultado salvo com sucesso!")
 
 # Variável global para controle do modo automático

@@ -33,7 +33,10 @@ def iniciar_interface():
             messagebox.showerror("Erro", f"Não foi possível abrir Testes.\n{e}")
 
     def abrir_resultados():
-        messagebox.showinfo("Resultados", "Funcionalidade de Resultados!")
+        try:
+            subprocess.Popen(["python", "Resultados.py"])  # Executa o arquivo registros.py
+        except Exception as e:
+            messagebox.showerror("Erro", f"Não foi possível abrir Resultados.\n{e}")
 
     def abrir_configuracoes():
         messagebox.showinfo("Configurações", "Funcionalidade de Configurações!")
