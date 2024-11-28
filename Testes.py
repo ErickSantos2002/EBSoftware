@@ -6,31 +6,45 @@ import serial
 import time
 import os
 from threading import Thread
+from Configuracoes import obter_serial_configurada
 
 # Nome do arquivo CSV para resultados
 ARQUIVO_RESULTADOS = "Resultados.csv"
 
-# Configuração da porta serial
-ser = serial.Serial(
-    port="COM6",  # Substitua pela porta correta
-    baudrate=4800,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    bytesize=serial.EIGHTBITS,
-    timeout=1
-)
+# Obtemos a instância da porta serial configurada
+try:
+    ser = obter_serial_configurada()
+except Exception as e:
+    print(f"Erro ao configurar a porta serial: {e}")
+    exit()
 
 # Função para enviar comandos ao dispositivo
 def enviar_comando(comando):
-    comando_completo = f"{comando}\r\n"
-    ser.write(comando_completo.encode('ascii'))
-    print(f"Comando enviado: {comando_completo}")
+    try:
+        ser = obter_serial_configurada()
+        comando_completo = f"{comando}\r\n"
+        ser.write(comando_completo.encode('ascii'))
+        print(f"Comando enviado: {comando_completo}")
+    except Exception as e:
+        print(f"Erro ao enviar comando: {e}")
+        raise Exception("Porta serial não está configurada ou aberta.")
+    finally:
+        if ser and ser.is_open:
+            ser.close()
 
 # Função para ler resposta do dispositivo
 def ler_resposta():
-    resposta = ser.readline().decode('ascii').strip()
-    print(f"Resposta recebida: {resposta}")
-    return resposta
+    try:
+        ser = obter_serial_configurada()
+        resposta = ser.readline().decode('ascii').strip()
+        print(f"Resposta recebida: {resposta}")
+        return resposta
+    except Exception as e:
+        print(f"Erro ao ler resposta: {e}")
+        return None
+    finally:
+        if ser and ser.is_open:
+            ser.close()
 
 # Função para obter o próximo ID de teste
 def proximo_id_teste():
@@ -91,7 +105,7 @@ def iniciar_testes():
         enviar_comando("$START")
         while True:
             resposta = ler_resposta()
-            if resposta.startswith("$RESULT"):
+            if resposta.startswith("$START"):
                 resultado = resposta.split(",")[1]  # Exemplo: 0.000-OK
                 salvar_resultado(id_teste, id_usuario, nome, matricula, setor, data_hora, resultado)
                 messagebox.showinfo("Sucesso", "Teste realizado com sucesso!")
@@ -109,7 +123,7 @@ def iniciar_testes():
                 enviar_comando("$START")  # Inicia o teste
                 while executando_automatico:
                     resposta = ler_resposta()
-                    if resposta.startswith("$RESULT"):
+                    if resposta.startswith("$START"):
                         resultado = resposta.split(",")[1]  # Exemplo: 0.000-OK ou 1.125-HIGH
                         salvar_resultado(id_teste, "Automático", "Automático", "Automático", "Automático", data_hora, resultado)
                         print("Teste automático realizado com sucesso!")

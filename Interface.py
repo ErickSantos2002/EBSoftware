@@ -34,12 +34,15 @@ def iniciar_interface():
 
     def abrir_resultados():
         try:
-            subprocess.Popen(["python", "Resultados.py"])  # Executa o arquivo registros.py
+            subprocess.Popen(["python", "Resultados.py"])  # Executa o arquivo Resultados.py
         except Exception as e:
             messagebox.showerror("Erro", f"Não foi possível abrir Resultados.\n{e}")
 
     def abrir_configuracoes():
-        messagebox.showinfo("Configurações", "Funcionalidade de Configurações!")
+        try:
+            subprocess.Popen(["python", "Configuracoes.py"])  # Executa o arquivo Configurações.py
+        except Exception as e:
+            messagebox.showerror("Erro", f"Não foi possível abrir Configurações.\n{e}")
 
     def salvar_arquivo():
         messagebox.showinfo("Salvar", "Funcionalidade de Salvar!")
