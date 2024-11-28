@@ -6,8 +6,16 @@ import pandas as pd
 from datetime import datetime
 from tkcalendar import DateEntry
 import os
+import subprocess
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas
+import win32print
+import win32api
+import win32ui
 
 ARQUIVO_RESULTADOS = "Resultados.csv"
+# Variável global para armazenar o estado da ordenação
+ordem_atual = {"coluna": None, "direcao": True}  # Por padrão, crescente (True)
 
 def iniciar_resultados():
     resultados_root = tk.Tk()
@@ -93,23 +101,150 @@ def iniciar_resultados():
 
     carregar_resultados()
 
-    # Função para ordenar colunas
-    def ordenar_coluna(coluna, is_data):
-        registros = [(tree.item(item)["values"], item) for item in tree.get_children()]
-        if is_data:  # Ordena por data
-            registros.sort(key=lambda x: datetime.strptime(str(x[0][5]), "%Y-%m-%d %H:%M:%S"))
-        else:  # Ordena por texto ou número, convertendo para string para evitar erros
-            registros.sort(key=lambda x: str(x[0][tree["columns"].index(coluna)]))
+    
 
-        # Reinsere os itens na nova ordem
-        for i, (values, item) in enumerate(registros):
-            tree.move(item, "", i)
+    def ordenar_coluna(coluna, numerica=False):
+        global ordem_atual
+
+        # Alterna a direção da ordenação
+        if ordem_atual["coluna"] == coluna:
+            ordem_atual["direcao"] = not ordem_atual["direcao"]
+        else:
+            ordem_atual["coluna"] = coluna
+            ordem_atual["direcao"] = True  # Começa sempre como crescente
+
+        # Ordena os dados
+        dados = [(tree.set(k, coluna), k) for k in tree.get_children("")]
+        if numerica:
+            dados.sort(key=lambda t: int(t[0]) if t[0].isdigit() else 0, reverse=not ordem_atual["direcao"])
+        else:
+            dados.sort(key=lambda t: t[0], reverse=not ordem_atual["direcao"])
+
+        # Reorganiza as linhas
+        for index, (_, k) in enumerate(dados):
+            tree.move(k, "", index)
+
+        # Atualiza os cabeçalhos com a seta de ordenação
+        for col in tree["columns"]:
+            texto = col
+            if col == coluna:
+                texto += " ▲" if ordem_atual["direcao"] else " ▼"
+            tree.heading(col, text=texto, command=lambda c=col: ordenar_coluna(c, c in ["ID do teste", "ID do usuário"]))
 
     # Frame para os botões
     frame_esquerda = tk.Frame(resultados_root)
     frame_esquerda.pack(side="left", fill="y", padx=10, pady=10)
+    
+    def salvar_lista_como_pdf(tree):
+        try:
+            # Obter o caminho para salvar o arquivo
+            caminho_arquivo = fd.asksaveasfilename(
+                defaultextension=".pdf",
+                filetypes=[("PDF Files", "*.pdf")],
+                title="Salvar como PDF",
+                initialfile="Registros EBS010"
+            )
+            if not caminho_arquivo:
+                return  # O usuário cancelou a ação
 
-    tk.Button(frame_esquerda, text="Imprimir", command=lambda: messagebox.showinfo("Imprimir", "Funcionalidade de impressão em desenvolvimento!"), width=20).pack(pady=5)
+            # Configuração do PDF (paisagem para mais espaço horizontal)
+            c = canvas.Canvas(caminho_arquivo, pagesize=landscape(letter))
+            largura, altura = landscape(letter)
+
+            # Título do PDF
+            c.setFont("Helvetica-Bold", 16)
+            c.drawString(30, altura - 40, "Registros de Resultados EBS010")
+
+            # Cabeçalhos das colunas
+            colunas = ["ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Qtd. Álcool", "Status"]
+            larguras_colunas = [60, 80, 100, 90, 90, 160, 90, 80]  # Ajustar tamanhos das colunas
+            c.setFont("Helvetica-Bold", 10)
+            y = altura - 70  # Início da tabela
+            x_inicial = 30
+
+            for i, coluna in enumerate(colunas):
+                c.drawString(x_inicial, y, coluna)
+                x_inicial += larguras_colunas[i]
+
+            # Dados do Treeview
+            c.setFont("Helvetica", 10)
+            y -= 20  # Ajusta a posição inicial para os dados
+            for item in tree.get_children():
+                valores = tree.item(item)["values"]
+                x_inicial = 30  # Reinicia a posição X para cada linha
+                for i, valor in enumerate(valores):
+                    c.drawString(x_inicial, y, str(valor))
+                    x_inicial += larguras_colunas[i]
+                y -= 20  # Move para a próxima linha
+
+                # Adiciona uma nova página se o espaço acabar
+                if y < 50:
+                    c.showPage()
+                    c.setFont("Helvetica-Bold", 10)
+                    y = altura - 70
+                    x_inicial = 30
+                    for i, coluna in enumerate(colunas):
+                        c.drawString(x_inicial, y, coluna)
+                        x_inicial += larguras_colunas[i]
+                    c.setFont("Helvetica", 10)
+                    y -= 20
+
+            # Salvar e fechar o PDF
+            c.save()
+            messagebox.showinfo("Sucesso", "O arquivo PDF foi salvo com sucesso!")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao salvar o PDF: {e}")
+    
+    # Função para salvar em Excel
+    def salvar_excel():
+        caminho_arquivo = fd.asksaveasfilename(
+            defaultextension=".xlsx",
+            filetypes=[("Arquivos Excel", "*.xlsx")],
+            title="Salvar em Excel",
+            initialfile="Registros EBS010"
+        )
+        if not caminho_arquivo:
+            return  # O usuário cancelou a ação
+
+        # Coletar dados do Treeview
+        rows = [tree.item(item)["values"] for item in tree.get_children()]
+        colunas = [
+            "ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Qtd. Álcool", "Status"
+        ]
+
+        # Criar o DataFrame
+        df = pd.DataFrame(rows, columns=colunas)
+
+        # Alterar a formatação da coluna "Data e hora"
+        if "Data e hora" in df.columns:
+            df["Data e hora"] = df["Data e hora"].apply(
+                lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%y %H:%M:%S") if isinstance(x, str) else x
+            )
+
+        # Salvar o DataFrame em Excel com ajuste de largura
+        try:
+            with pd.ExcelWriter(caminho_arquivo, engine="openpyxl") as writer:
+                df.to_excel(writer, index=False, sheet_name="Resultados")
+                worksheet = writer.sheets["Resultados"]
+
+                # Auto ajustar as colunas no Excel
+                for column_cells in worksheet.columns:
+                    max_length = 0
+                    column = column_cells[0].column_letter  # Letra da coluna no Excel
+                    for cell in column_cells:
+                        try:
+                            if cell.value:
+                                max_length = max(max_length, len(str(cell.value)))
+                        except:
+                            pass
+                    adjusted_width = max_length + 2  # Espaço extra para melhor visualização
+                    worksheet.column_dimensions[column].width = adjusted_width
+
+            messagebox.showinfo("Sucesso", "Resultados salvos com sucesso!")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao salvar o Excel: {e}")
+
+    tk.Button(frame_esquerda, text="Salvar em PDF", command=lambda: salvar_lista_como_pdf(tree), width=20).pack(pady=5)
     tk.Button(frame_esquerda, text="Salvar em Excel", command=lambda: salvar_excel(), width=20).pack(pady=5)
     tk.Button(frame_esquerda, text="Fechar", command=resultados_root.destroy, width=20).pack(pady=5)
 
@@ -134,11 +269,11 @@ def iniciar_resultados():
         data_final.configure(state=estado)
 
     periodo_todos.trace_add("write", lambda *args: toggle_datas())
-
+    
     # ID do usuário
     frame_id = tk.Frame(frame_pesquisa)
     frame_id.grid(row=1, column=0, columnspan=5, pady=5)
-    tk.Label(frame_id, text="Usuário:").pack(side="left", padx=5)
+    tk.Label(frame_id, text="Usuário (ID):").pack(side="left", padx=5)
     lista_usuarios = ttk.Combobox(frame_id, values=[], state="readonly", width=20)
     lista_usuarios.pack(side="left", padx=5)
 
@@ -152,6 +287,23 @@ def iniciar_resultados():
 
     carregar_usuarios()
 
+    # Checkbox para "Todos os Usuários"
+    todos_usuarios = tk.BooleanVar(value=True)
+
+    # Função para habilitar/desabilitar o Combobox de usuários
+    def toggle_usuarios():
+        if todos_usuarios.get():
+            lista_usuarios.set("")  # Limpa a seleção
+            lista_usuarios.configure(state="disabled")  # Desabilita o Combobox
+        else:
+            lista_usuarios.configure(state="normal")  # Habilita o Combobox
+
+    # Atualiza o estado inicial do Combobox de usuários
+    toggle_usuarios()
+
+    
+    tk.Checkbutton(frame_id, text="Todos os usuários", variable=todos_usuarios, command=toggle_usuarios).pack(side="left", padx=5)
+
     # Resultado
     frame_resultado = tk.Frame(frame_pesquisa)
     frame_resultado.grid(row=2, column=0, columnspan=5, pady=5)
@@ -161,13 +313,12 @@ def iniciar_resultados():
     tk.Radiobutton(frame_resultado, text="Aprovados", variable=resultado_opcoes, value="Aprovados").pack(side="left", padx=5)
     tk.Radiobutton(frame_resultado, text="Reprovados", variable=resultado_opcoes, value="Reprovados").pack(side="left", padx=5)
 
-    # Função para aplicar os filtros
     def aplicar_filtros():
-        tree.delete(*tree.get_children())
+        tree.delete(*tree.get_children())  # Limpa o Treeview
         if not os.path.exists(ARQUIVO_RESULTADOS):
             return
 
-        with open(ARQUIVO_RESULTADOS, mode="r", newline="") as file:
+        with open(ARQUIVO_RESULTADOS, mode="r", newline="", encoding="utf-8") as file:
             reader = csv.DictReader(file)
             for row in reader:
                 # Filtro por data
@@ -177,31 +328,36 @@ def iniciar_resultados():
                         continue
 
                 # Filtro por usuário
-                if lista_usuarios.get() and not lista_usuarios.get().startswith(row["ID do usuário"]):
+                if not todos_usuarios.get() and lista_usuarios.get() and not lista_usuarios.get().startswith(row["ID do usuário"]):
                     continue
 
                 # Filtro por resultado
-                if resultado_opcoes.get() == "Aprovados" and "OK" not in row["Resultado do teste de álcool"]:
+                if resultado_opcoes.get() == "Aprovados" and row["Status"] != "OK":
                     continue
-                if resultado_opcoes.get() == "Reprovados" and "HIGH" not in row["Resultado do teste de álcool"]:
+                if resultado_opcoes.get() == "Reprovados" and row["Status"] != "HIGH":
                     continue
 
-                tree.insert("", "end", values=(row["ID do teste"], row["ID do usuário"], row["Nome"], row["Matrícula"], row["Setor"], row["Data e hora"]))
+                # Adiciona o resultado ao Treeview
+                tree.insert(
+                    "",
+                    "end",
+                    values=(
+                        row["ID do teste"],
+                        row["ID do usuário"],
+                        row["Nome"],
+                        row["Matrícula"],
+                        row["Setor"],
+                        row["Data e hora"],
+                        row["Quantidade de Álcool"],
+                        row["Status"],
+                    )
+                )
 
     tk.Button(frame_pesquisa, text="Pesquisar", command=aplicar_filtros).grid(row=3, column=0, columnspan=5, pady=10)
 
-    # Função para salvar em Excel
-    def salvar_excel():
-        caminho_arquivo = fd.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Arquivos Excel", "*.xlsx")], title="Salvar em Excel")
-        if not caminho_arquivo:
-            return
-        rows = [tree.item(item)["values"] for item in tree.get_children()]
-        colunas = ["ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora"]
-        df = pd.DataFrame(rows, columns=colunas)
-        df.to_excel(caminho_arquivo, index=False)
-        messagebox.showinfo("Sucesso", "Resultados salvos com sucesso!")
-
     resultados_root.mainloop()
+
+    
 
 # Para executar como standalone
 if __name__ == "__main__":
