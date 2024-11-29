@@ -1,47 +1,26 @@
 ID do teste,ID do usuário,Nome,Matrícula,Setor,Data e hora,Quantidade de Álcool,Status
-1,0,Automático,Automático,Automático,2024-11-27 16:54:38,0.000,OK
-2,0,Automático,Automático,Automático,2024-11-27 16:54:43,0.000,OK
-3,0,Automático,Automático,Automático,2024-11-28 09:40:35,0.000,OK
-4,0,Automático,Automático,Automático,2024-11-28 09:40:44,0.000,OK
-5,0,Automático,Automático,Automático,2024-11-28 09:40:49,0.000,OK
-6,1,Erick,53,TI,2024-11-28 09:40:59,0.000,OK
-7,2,Welton,55,Suporte,2024-11-28 09:41:06,0.000,OK
-8,4,Djalma,57,Administração,2024-11-28 09:41:15,0.000,OK
-9,1,Erick,53,TI,2024-11-28 09:46:22,0.000,OK
-10,1,Erick,53,TI,2024-11-28 09:46:47,0.000,OK
-11,1,Erick,53,TI,2024-11-28 09:47:05,0.000,OK
-12,1,Erick,53,TI,2024-11-28 09:47:32,0.000,OK
-13,1,Erick,53,TI,2024-11-28 09:48:10,0.000,OK
-14,1,Erick,53,TI,2024-11-28 09:48:27,0.000,OK
-15,1,Erick,53,TI,2024-11-28 09:48:49,0.390,HIGH
-16,0,Automático,Automático,Automático,2024-11-28 09:49:08,0.000,OK
-17,0,Automático,Automático,Automático,2024-11-28 09:49:28,0.000,OK
-18,0,Automático,Automático,Automático,2024-11-28 09:49:34,0.000,OK
-19,0,Automático,Automático,Automático,2024-11-28 09:49:42,0.000,OK
-20,0,Automático,Automático,Automático,2024-11-28 09:49:50,0.000,OK
-21,0,Automático,Automático,Automático,2024-11-28 09:50:07,0.150,HIGH
-10,1,Erick,53,TI,2024-11-28 09:46:47,0.000,OK
-11,1,Erick,53,TI,2024-11-28 09:47:05,0.000,OK
-12,1,Erick,53,TI,2024-11-28 09:47:32,0.000,OK
-13,1,Erick,53,TI,2024-11-28 09:48:10,0.000,OK
-14,1,Erick,53,TI,2024-11-28 09:48:27,0.000,OK
-15,1,Erick,53,TI,2024-11-28 09:48:49,0.390,HIGH
-16,0,Automático,Automático,Automático,2024-11-28 09:49:08,0.000,OK
-17,0,Automático,Automático,Automático,2024-11-28 09:49:28,0.000,OK
-18,0,Automático,Automático,Automático,2024-11-28 09:49:34,0.000,OK
-19,0,Automático,Automático,Automático,2024-11-28 09:49:42,0.000,OK
-20,0,Automático,Automático,Automático,2024-11-28 09:49:50,0.000,OK
-21,0,Automático,Automático,Automático,2024-11-28 09:50:07,0.150,HIGH
-10,1,Erick,53,TI,2024-11-28 09:46:47,0.000,OK
-11,1,Erick,53,TI,2024-11-28 09:47:05,0.000,OK
-12,1,Erick,53,TI,2024-11-28 09:47:32,0.000,OK
-13,1,Erick,53,TI,2024-11-28 09:48:10,0.000,OK
-14,1,Erick,53,TI,2024-11-28 09:48:27,0.000,OK
-15,1,Erick,53,TI,2024-11-28 09:48:49,0.390,HIGH
-16,0,Automático,Automático,Automático,2024-11-28 09:49:08,0.000,OK
-17,0,Automático,Automático,Automático,2024-11-28 09:49:28,0.000,OK
-18,0,Automático,Automático,Automático,2024-11-28 09:49:34,0.000,OK
-19,0,Automático,Automático,Automático,2024-11-28 09:49:42,0.000,OK
-20,0,Automático,Automático,Automático,2024-11-28 09:49:50,0.000,OK
-21,0,Automático,Automático,Automático,2024-11-28 09:50:07,0.150,HIGH
-22,1,Erick,53,TI,2024-11-28 12:47:02,0.000,OK
+1,0,Automático,Automático,Automático,2024-11-25 09:44:44,0.000,Aprovado
+2,0,Automático,Automático,Automático,2024-11-26 09:44:52,0.000,Aprovado
+3,0,Automático,Automático,Automático,2024-11-27 09:45:03,1.321,Rejeitado
+4,0,Automático,Automático,Automático,2024-11-28 09:45:11,0.000,Aprovado
+5,0,Automático,Automático,Automático,2024-11-29 09:45:23,1.110,Rejeitado
+6,0,Automático,Automático,Automático,2024-11-29 09:45:29,0.000,Aprovado
+7,0,Automático,Automático,Automático,2024-11-29 09:45:38,1.010,Rejeitado
+8,0,Automático,Automático,Automático,2024-11-29 09:45:45,0.200,Aprovado
+9,0,Automático,Automático,Automático,2024-11-29 09:46:06,0.351,Aprovado
+10,0,Automático,Automático,Automático,2024-11-29 09:46:57,0.954,Rejeitado
+11,0,Automático,Automático,Automático,2024-11-29 09:47:28,0.000,Aprovado
+12,0,Automático,Automático,Automático,2024-11-29 09:47:45,0.000,Aprovado
+13,12,Usuário 1,MAT0001,Setor 2,2024-11-29 11:19:56,0.000,Aprovado
+14,13,Usuário 2,MAT0002,Setor 3,2024-11-29 11:22:31,0.000,Aprovado
+15,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:23:31,0.000,Aprovado
+16,12,Usuário 1,MAT0001,Setor 2,2024-11-29 11:28:51,0.000,Aprovado
+17,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:29:45,0.000,Aprovado
+18,16,Usuário 5,MAT0005,Setor 1,2024-11-29 11:34:26,0.000,Aprovado
+19,13,Usuário 2,MAT0002,Setor 3,2024-11-29 11:51:42,0.000,Aprovado
+20,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:59:21,0.000,Aprovado
+16,12,Usuário 1,MAT0001,Setor 2,2024-11-29 11:28:51,0.000,Aprovado
+17,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:29:45,0.000,Aprovado
+18,16,Usuário 5,MAT0005,Setor 1,2024-11-29 11:34:26,0.000,Aprovado
+19,13,Usuário 2,MAT0002,Setor 3,2024-11-29 11:51:42,0.000,Aprovado
+20,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:59:21,0.000,Aprovado

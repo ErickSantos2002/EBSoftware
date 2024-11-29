@@ -1,64 +1,87 @@
-import serial
+import tkinter as tk
+from tkinter import ttk, messagebox
 import serial.tools.list_ports
 import configparser
-from tkinter import messagebox
 
-# Configuração do arquivo de configuração
+# Caminho do arquivo de configuração
 CONFIG_FILE = "config.ini"
-config = configparser.ConfigParser()
 
+# Função para salvar a porta no config.ini
 def salvar_porta_configurada(porta):
-    """Salva a porta configurada no arquivo config.ini."""
+    config = configparser.ConfigParser()
     config["Serial"] = {"porta": porta}
     with open(CONFIG_FILE, "w") as configfile:
         config.write(configfile)
     print(f"Porta {porta} salva no arquivo de configuração.")
 
-def carregar_porta_configurada():
-    """Carrega a porta configurada no arquivo config.ini."""
-    if not config.read(CONFIG_FILE):
-        return None
-    return config.get("Serial", "porta", fallback=None)
-
+# Função para buscar automaticamente a porta Silicon Labs
 def buscar_porta_automatica():
-    """Procura a porta correspondente automaticamente."""
     ports = serial.tools.list_ports.comports()
     for port in ports:
         if "Silicon Labs" in port.description:
             return port.device
     return None
 
-def abrir_porta_serial(porta):
-    """Abre e retorna uma instância da porta serial."""
-    try:
-        ser = serial.Serial(
-            port=porta,
-            baudrate=4800,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            bytesize=serial.EIGHTBITS,
-            timeout=1
-        )
-        print(f"Porta {porta} aberta com sucesso.")
-        return ser
-    except Exception as e:
-        print(f"Erro ao abrir porta {porta}: {e}")
-        return None
+# Função para carregar a porta configurada
+def carregar_porta_configurada():
+    config = configparser.ConfigParser()
+    if config.read(CONFIG_FILE) and "Serial" in config and "porta" in config["Serial"]:
+        return config["Serial"]["porta"]
+    return None
 
-def obter_serial_configurada():
-    """Obtém uma instância da porta configurada."""
+# Função para iniciar a interface de configurações
+def iniciar_configuracoes():
+    root = tk.Tk()
+    root.title("Configurações")
+    root.geometry("400x300")
+    root.resizable(False, False)
+
+    # Frame principal
+    frame_principal = tk.Frame(root, padx=10, pady=10)
+    frame_principal.pack(fill="both", expand=True)
+
+    # Label de título
+    tk.Label(frame_principal, text="Configuração da Porta Serial", font=("Arial", 14, "bold")).pack(pady=10)
+
+    # Combobox para portas disponíveis
+    porta_var = tk.StringVar()
+    portas_disponiveis = [port.device for port in serial.tools.list_ports.comports()]
+    tk.Label(frame_principal, text="Selecione a porta:").pack(anchor="w", pady=5)
+    combobox_portas = ttk.Combobox(frame_principal, textvariable=porta_var, values=portas_disponiveis, state="readonly")
+    combobox_portas.pack(fill="x", pady=5)
+
+    # Botão para buscar porta automaticamente
+    def procurar_automatica():
+        porta_auto = buscar_porta_automatica()
+        if porta_auto:
+            porta_var.set(porta_auto)
+            salvar_porta_configurada(porta_auto)
+            messagebox.showinfo("Configuração", f"Porta {porta_auto} configurada automaticamente.")
+        else:
+            messagebox.showerror("Erro", "Nenhuma porta Silicon Labs encontrada.")
+
+    tk.Button(frame_principal, text="Buscar Porta Automática", command=procurar_automatica).pack(pady=5)
+
+    # Botão para salvar a configuração manual
+    def salvar_configuracao_manual():
+        porta_selecionada = combobox_portas.get()
+        if not porta_selecionada:
+            messagebox.showerror("Erro", "Selecione uma porta para configurar.")
+            return
+        salvar_porta_configurada(porta_selecionada)
+        messagebox.showinfo("Configuração", f"Porta {porta_selecionada} configurada com sucesso!")
+
+    tk.Button(frame_principal, text="Salvar Configuração", command=salvar_configuracao_manual).pack(pady=5)
+
+    # Exibe a porta configurada atualmente
     porta_configurada = carregar_porta_configurada()
-    if not porta_configurada:
-        raise Exception("Nenhuma porta serial configurada.")
-    ser = abrir_porta_serial(porta_configurada)
-    if not ser:
-        raise Exception(f"Falha ao abrir porta {porta_configurada}. Verifique as configurações.")
-    return ser
+    tk.Label(frame_principal, text=f"Porta Configurada: {porta_configurada or 'Nenhuma'}", font=("Arial", 10)).pack(pady=10)
 
-def configurar_porta(porta):
-    """Configura a porta serial."""
-    if abrir_porta_serial(porta):
-        salvar_porta_configurada(porta)
-        messagebox.showinfo("Configuração", f"Porta {porta} configurada com sucesso!")
-    else:
-        messagebox.showerror("Erro", f"Falha ao configurar a porta {porta}.")
+    # Botão para fechar a janela
+    tk.Button(frame_principal, text="Fechar", command=root.destroy).pack(side="bottom", pady=10)
+
+    root.mainloop()
+
+# Executar como standalone
+if __name__ == "__main__":
+    iniciar_configuracoes()

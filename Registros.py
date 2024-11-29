@@ -7,6 +7,7 @@ import pandas as pd
 
 # Nome do arquivo CSV
 ARQUIVO_CSV = "registros.csv"
+ordem_atual = {"coluna": None, "direcao": True}  # Por padrão, crescente (True
 
 # Função para carregar os registros do CSV
 def carregar_registros():
@@ -219,15 +220,40 @@ def iniciar_registros():
         except Exception as e:
             messagebox.showerror("Erro", f"Falha ao salvar o modelo: {e}")
 
-    # Função para ordenar os registros
-    ordem_atual = {"ID": True, "Nome": True, "Matricula": True, "Setor": True}  # Define a ordem inicial como crescente
+    # Variável global para controle da ordenação
 
-    def ordenar_por(coluna):
-        nonlocal registros  # Indica que estamos usando a variável 'registros' do escopo externo
-        ordem = ordem_atual[coluna]
-        registros = sorted(registros, key=lambda r: r[coluna], reverse=not ordem)
-        ordem_atual[coluna] = not ordem  # Alterna a ordem
+    # Função para atualizar a lista exibida
+    def atualizar_lista():
+        tree.delete(*tree.get_children())
+        for registro in registros:
+            tree.insert("", "end", values=(registro["ID"], registro["Nome"], registro["Matricula"], registro["Setor"]))
+
+    # Função para ordenar colunas
+    def ordenar_coluna(coluna):
+        global ordem_atual
+
+        # Alterna a direção da ordenação
+        if ordem_atual["coluna"] == coluna:
+            ordem_atual["direcao"] = not ordem_atual["direcao"]
+        else:
+            ordem_atual["coluna"] = coluna
+            ordem_atual["direcao"] = True  # Começa sempre como crescente
+
+        # Define o método de ordenação
+        if coluna == "ID":
+            registros.sort(key=lambda r: int(r["ID"]), reverse=not ordem_atual["direcao"])
+        else:
+            registros.sort(key=lambda r: r[coluna], reverse=not ordem_atual["direcao"])
+
+        # Atualiza a exibição
         atualizar_lista()
+
+        # Atualiza os cabeçalhos com a seta de ordenação
+        for col in tree["columns"]:
+            texto = col
+            if col == coluna:
+                texto += " ▲" if ordem_atual["direcao"] else " ▼"
+            tree.heading(col, text=texto, command=lambda c=col: ordenar_coluna(c))
 
     # Função para pesquisar registros
     def pesquisar_registros(event=None):
@@ -250,9 +276,14 @@ def iniciar_registros():
         for registro in registros_filtrados:
             tree.insert("", "end", values=(registro["ID"], registro["Nome"], registro["Matricula"], registro["Setor"]))
 
+
     # Layout do lado esquerdo
     frame_esquerdo = tk.Frame(registros_root)
     frame_esquerdo.pack(side="left", fill="y", padx=10, pady=10)
+
+    # Adicionando a barra de rolagem
+    scrollbar_vertical = ttk.Scrollbar(frame_esquerdo, orient="vertical")
+    scrollbar_vertical.pack(side="right", fill="y")
 
     # Campo de pesquisa acima da lista
     frame_pesquisa = tk.Frame(registros_root)
@@ -263,18 +294,25 @@ def iniciar_registros():
     entrada_pesquisa.pack(side="left", padx=5)
     entrada_pesquisa.bind("<KeyRelease>", pesquisar_registros)  # Atualiza a pesquisa enquanto o usuário digita
 
-    # Tabela para exibir os registros
-    tree = ttk.Treeview(frame_esquerdo, columns=("ID", "Nome", "Matricula", "Setor"), show="headings")
-    # Configuração dos cabeçalhos clicáveis para ordenação
-    tree.heading("ID", text="ID", command=lambda: ordenar_por("ID"))
-    tree.heading("Nome", text="Nome", command=lambda: ordenar_por("Nome"))
-    tree.heading("Matricula", text="Matrícula", command=lambda: ordenar_por("Matricula"))
-    tree.heading("Setor", text="Setor", command=lambda: ordenar_por("Setor"))
-    tree.column("ID", width=50)
+    # Configuração inicial da TreeView
+    tree = ttk.Treeview(
+        frame_esquerdo, 
+        columns=("ID", "Nome", "Matricula", "Setor"), 
+        show="headings", 
+        yscrollcommand=scrollbar_vertical.set
+    )
+    tree.heading("ID", text="ID", command=lambda: ordenar_coluna("ID"))
+    tree.heading("Nome", text="Nome", command=lambda: ordenar_coluna("Nome"))
+    tree.heading("Matricula", text="Matricula", command=lambda: ordenar_coluna("Matricula"))
+    tree.heading("Setor", text="Setor", command=lambda: ordenar_coluna("Setor"))
+    tree.column("ID", width=50, anchor="center")
     tree.column("Nome", width=150)
     tree.column("Matricula", width=100)
     tree.column("Setor", width=100)
-    tree.pack(fill="both", expand=True)
+    tree.pack(side="left", fill="both", expand=True)
+
+    # Configuração da barra de rolagem para controlar o Treeview
+    scrollbar_vertical.config(command=tree.yview)
 
     # Layout do lado direito
     frame_direito = tk.Frame(registros_root)

@@ -256,10 +256,13 @@ def iniciar_resultados():
     periodo_todos = tk.BooleanVar(value=True)
     tk.Checkbutton(frame_pesquisa, text="Todas as datas", variable=periodo_todos).grid(row=0, column=0, padx=5)
     tk.Label(frame_pesquisa, text="De:").grid(row=0, column=1)
-    data_inicial = DateEntry(frame_pesquisa, width=12, state="disabled")
+
+    # Configuração para exibir DD/MM/YY
+    data_inicial = DateEntry(frame_pesquisa, width=12, state="disabled", date_pattern="dd/MM/yyyy")
     data_inicial.grid(row=0, column=2)
+
     tk.Label(frame_pesquisa, text="Até:").grid(row=0, column=3)
-    data_final = DateEntry(frame_pesquisa, width=12, state="disabled")
+    data_final = DateEntry(frame_pesquisa, width=12, state="disabled", date_pattern="dd/MM/yyyy")
     data_final.grid(row=0, column=4)
 
     # Ativar/desativar campos de data
@@ -311,7 +314,7 @@ def iniciar_resultados():
     resultado_opcoes = tk.StringVar(value="Todos")
     tk.Radiobutton(frame_resultado, text="Todos resultados", variable=resultado_opcoes, value="Todos").pack(side="left", padx=5)
     tk.Radiobutton(frame_resultado, text="Aprovados", variable=resultado_opcoes, value="Aprovados").pack(side="left", padx=5)
-    tk.Radiobutton(frame_resultado, text="Reprovados", variable=resultado_opcoes, value="Reprovados").pack(side="left", padx=5)
+    tk.Radiobutton(frame_resultado, text="Rejeitados", variable=resultado_opcoes, value="Rejeitados").pack(side="left", padx=5)
 
     def aplicar_filtros():
         tree.delete(*tree.get_children())  # Limpa o Treeview
@@ -332,9 +335,9 @@ def iniciar_resultados():
                     continue
 
                 # Filtro por resultado
-                if resultado_opcoes.get() == "Aprovados" and row["Status"] != "OK":
+                if resultado_opcoes.get() == "Aprovados" and row["Status"] != "Aprovado":
                     continue
-                if resultado_opcoes.get() == "Reprovados" and row["Status"] != "HIGH":
+                if resultado_opcoes.get() == "Rejeitados" and row["Status"] != "Rejeitado":
                     continue
 
                 # Adiciona o resultado ao Treeview

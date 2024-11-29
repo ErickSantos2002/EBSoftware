@@ -44,8 +44,11 @@ def iniciar_interface():
         except Exception as e:
             messagebox.showerror("Erro", f"Não foi possível abrir Configurações.\n{e}")
 
-    def salvar_arquivo():
-        messagebox.showinfo("Salvar", "Funcionalidade de Salvar!")
+    def abrir_informacoes():
+        try:
+            subprocess.Popen(["python", "Informacoes.py"])  # Executa o arquivo Resultados.py
+        except Exception as e:
+            messagebox.showerror("Erro", f"Não foi possível abrir Informacoes.\n{e}")
 
     # Criação dos botões na parte superior
     frame_top = tk.Frame(root, bg="#ccc", height=50)
@@ -63,7 +66,7 @@ def iniciar_interface():
     botao_configuracoes = tk.Button(frame_top, text="Configurações", command=abrir_configuracoes, width=15)
     botao_configuracoes.pack(side="left", padx=5, pady=5)
 
-    botao_salvar = tk.Button(frame_top, text="Salvar", command=salvar_arquivo, width=15)
+    botao_salvar = tk.Button(frame_top, text="Informações", command=abrir_informacoes, width=15)
     botao_salvar.pack(side="left", padx=5, pady=5)
 
     # Mantém a janela aberta
