@@ -11,7 +11,7 @@ def iniciar_interface():
     root.resizable(False, False)
 
     # Redimensionar a imagem de fundo
-    original_image = Image.open("Logo.png")  # Carrega a imagem original
+    original_image = Image.open("C:\\Users\\pc\\Documents\\GitHub\\SoftwareEBS\\assets\\Logo.png")  # Carrega a imagem original
     resized_image = original_image.resize((800, 600))  # Redimensiona a imagem
     background_image = ImageTk.PhotoImage(resized_image)
 
