@@ -14,6 +14,9 @@ from src.backend.Registros import (carregar_registros, adicionar_registro,
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
 
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)  # Adiciona src ao início do sys.path
+    
 estilo = """
             font-family: Arial; font-size: 12px;
             background-color: #f0f0f0;
@@ -22,8 +25,7 @@ estilo = """
             margin-top: 5px;
         """
 
-if SRC_DIR not in sys.path:
-    sys.path.insert(0, SRC_DIR)  # Adiciona src ao início do sys.path
+
 
 class CustomTableWidgetItem(QTableWidgetItem):
     def __lt__(self, other):

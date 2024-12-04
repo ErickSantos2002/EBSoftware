@@ -1,6 +1,5 @@
 ID,Nome,Matricula,Setor
 1,Erick Silva,1001,TI
-2,Welton Sousa,1002,Suporte
 3,Paulo Lima,1003,Financeiro
 4,Ana Oliveira,1004,Recursos Humanos
 5,João Pedro,1005,Marketing
@@ -17,7 +16,6 @@ ID,Nome,Matricula,Setor
 16,Usuário 6,MAT0006,Setor 2
 17,Usuário 7,MAT0007,Setor 3
 18,Usuário 8,MAT0008,Setor 4
-19,Usuário 9,MAT0009,Setor 5
 20,Usuário 10,MAT0010,Setor 1
 21,Usuário 11,MAT0011,Setor 2
 22,Usuário 12,MAT0012,Setor 3
@@ -47,6 +45,9 @@ ID,Nome,Matricula,Setor
 47,Usuário 37,MAT0037,Setor 3
 48,Usuário 38,MAT0038,Setor 4
 49,Usuário 39,MAT0039,Setor 5
-51,9,9,
 52,Usuário 36,MAT0036,Setor 2
 53,Usuário 40,MAT0040,Setor 1
+54,Walbert,75,Laboratorio
+55,9,9,
+56,Welton,54,Suporte
+57,66,16,

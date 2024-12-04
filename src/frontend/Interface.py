@@ -1,6 +1,8 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QWidget, 
+    QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect, QStackedLayout
+)
 from PyQt5.QtGui import QIcon, QFont, QColor
 from PyQt5.QtCore import Qt, QSize, QPropertyAnimation
 
@@ -152,16 +154,15 @@ class MainWindow(QMainWindow):
         logo_button.setIcon(QIcon(logo_path))
         logo_button.setIconSize(QSize(140, 80))  # Ajuste do tamanho da logo
         logo_button.setStyleSheet("border: none; background: transparent;")  # Remove fundo e borda
-        logo_button.clicked.connect(self.resetar_tela_principal)  # Conecta a ação
         layout.addWidget(logo_button, alignment=Qt.AlignRight)  # Alinha a logo à direita
-
+    
     def criar_conexao(self, nome):
         """Cria uma conexão para o botão com o nome especificado."""
         def on_click():
             if nome == "Registros":
                 self.abrir_modulo("Registros_Tela")
             elif nome == "Testes":
-                self.abrir_modulo("Testes.py")
+                self.abrir_modulo("Testes_Tela")
             elif nome == "Resultados":
                 self.abrir_modulo("Resultados.py")
             elif nome == "Configurações":
@@ -169,36 +170,30 @@ class MainWindow(QMainWindow):
             elif nome == "Informações":
                 self.abrir_modulo("Informacoes.py")
         return on_click
-
+    
     def abrir_modulo(self, modulo):
-        """Carrega o módulo especificado na área principal."""
-        # Redefine o fundo da área principal
-        self.main_area.setStyleSheet(f"background-color: {COR_CINZA};")
-        
-        # Verifica se a área principal já tem um layout e remove-o
-        layout_atual = self.main_area.layout()
-        if layout_atual is not None:
-            while layout_atual.count():
-                item = layout_atual.takeAt(0)
-                widget = item.widget()
-                if widget is not None:
-                    widget.deleteLater()
-            layout_atual.deleteLater()
-        
-        # Define um novo layout para a área principal
-        novo_layout = QVBoxLayout()
-        self.main_area.setLayout(novo_layout)
-
-        # Carrega o módulo especificado
-        if modulo == "Registros_Tela":
+        """Carrega o módulo especificado na área principal usando QStackedLayout."""
+        if not hasattr(self, "stacked_layout"):
+            # Cria o QStackedLayout apenas uma vez
+            self.stacked_layout = QStackedLayout()
+            self.main_area.setLayout(self.stacked_layout)
+            
+            # Adiciona os módulos ao layout empilhado
             from frontend.Registros_Tela import RegistrosTela
-            tela_registros = RegistrosTela(self)
-            novo_layout.addWidget(tela_registros)
+            self.tela_registros = RegistrosTela(self)
+            self.stacked_layout.addWidget(self.tela_registros)
+
+            from frontend.Testes_Tela import TestesTela
+            self.tela_testes = TestesTela(self)
+            self.stacked_layout.addWidget(self.tela_testes)
+
+        # Alterna para o módulo apropriado
+        if modulo == "Registros_Tela":
+            self.stacked_layout.setCurrentWidget(self.tela_registros)
+        elif modulo == "Testes_Tela":
+            self.stacked_layout.setCurrentWidget(self.tela_testes)
         else:
-            # Mensagem ou tela padrão para módulos não implementados
-            label = QLabel(f"Módulo {modulo} não implementado.")
-            label.setAlignment(Qt.AlignCenter)
-            novo_layout.addWidget(label)
+            print(f"Módulo {modulo} não encontrado.")
 
     def carregar_registros(self, layout):
         """Carrega a tela de Registros_Tela na área principal."""
@@ -241,29 +236,6 @@ class MainWindow(QMainWindow):
         label.setAlignment(Qt.AlignCenter)
         label.setFont(QFont("Arial", 14, QFont.Bold))
         layout.addWidget(label)
-
-    def resetar_tela_principal(self):
-        """Reseta a tela inicial cinza."""
-        self.main_area.setStyleSheet(f"background-color: {COR_CINZA};")
-        
-        # Verifica se a área principal já tem um layout e remove-o
-        layout_atual = self.main_area.layout()
-        if layout_atual is not None:
-            while layout_atual.count():
-                item = layout_atual.takeAt(0)
-                widget = item.widget()
-                if widget is not None:
-                    widget.deleteLater()
-            layout_atual.deleteLater()
-
-        # Define o layout inicial
-        inicial_layout = QVBoxLayout()
-        self.main_area.setLayout(inicial_layout)
-
-        label = QLabel("Área Principal")
-        label.setAlignment(Qt.AlignCenter)
-        label.setFont(QFont("Arial", 14, QFont.Bold))
-        inicial_layout.addWidget(label)
 
 
     # Criação da área central
