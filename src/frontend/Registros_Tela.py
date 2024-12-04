@@ -6,7 +6,9 @@ from PyQt5.QtWidgets import (
     QPushButton, QLineEdit, QFormLayout, QMessageBox, QHeaderView, QFrame, QFileDialog, QMessageBox
 )
 from PyQt5.QtCore import Qt
-from src.backend.Registros import carregar_registros, adicionar_registro, apagar_registros, importar_excel, exportar_modelo, exportar_modelo
+from src.backend.Registros import (carregar_registros, adicionar_registro, 
+    apagar_registros, importar_excel, exportar_modelo, exportar_modelo, gerar_arquivo_erros
+)
 
 # Caminho para garantir o diretório src no sys.path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +25,14 @@ estilo = """
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)  # Adiciona src ao início do sys.path
 
+class CustomTableWidgetItem(QTableWidgetItem):
+    def __lt__(self, other):
+        # Tenta comparar os dados internos (inteiros) em vez do texto
+        try:
+            return int(self.data(Qt.UserRole)) < int(other.data(Qt.UserRole))
+        except (ValueError, TypeError):
+            # Se a conversão falhar, usa a comparação padrão (strings)
+            return super().__lt__(other)
 
 class RegistrosTela(QWidget):
     def __init__(self, parent=None):
@@ -60,14 +70,30 @@ class RegistrosTela(QWidget):
         titulo.setAlignment(Qt.AlignCenter)
         titulo.setStyleSheet("font-family: Arial Black; font-size: 20px; background-color: #f0f0f0; margin-bottom: 10px;")
         left_panel.addWidget(titulo)
-
         # Campo de pesquisa
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Pesquisar por Nome, Matrícula ou Setor...")
         self.search_input.setStyleSheet(estilo)
+        self.search_input.returnPressed.connect(self.pesquisar_registros)
         search_button = QPushButton("Pesquisar")
-        search_button.setStyleSheet(estilo)
+        search_button.setStyleSheet("""
+            QPushButton {
+                font-family: Arial; 
+                font-size: 12px;
+                background-color: #f0f0f0;
+                border: 1px solid #cccccc;
+                padding: 5px;
+                margin-top: 5px;
+            }
+            QPushButton:hover {
+                background-color: #e0e0e0;  /* Cor mais clara no hover */
+            }
+            QPushButton:pressed {
+                background-color: #d0d0d0;  /* Cor mais escura quando pressionado */
+                border-style: inset;  /* Dá uma aparência de botão afundado */
+            }
+        """)
         search_button.clicked.connect(self.pesquisar_registros)
         search_layout.addWidget(self.search_input)
         search_layout.addWidget(search_button)
@@ -78,6 +104,8 @@ class RegistrosTela(QWidget):
         self.tabela.setColumnCount(4)
         self.tabela.setHorizontalHeaderLabels(["ID", "Nome", "Matrícula", "Setor"])
         self.tabela.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)  # Faz os cabeçalhos ocuparem todo o espaço
+        self.tabela.setSelectionBehavior(QTableWidget.SelectRows)
+        self.tabela.setSortingEnabled(True)
         self.tabela.setStyleSheet("""
             font-family: Arial; font-size: 12px;
             background-color: #f0f0f0;
@@ -109,8 +137,11 @@ class RegistrosTela(QWidget):
         self.matricula_input = QLineEdit()
         self.setor_input = QLineEdit()
         self.nome_input.setPlaceholderText("Nome")
+        self.nome_input.returnPressed.connect(self.cadastrar_usuario)
         self.matricula_input.setPlaceholderText("Matricula")
+        self.matricula_input.returnPressed.connect(self.cadastrar_usuario)
         self.setor_input.setPlaceholderText("Setor")
+        self.setor_input.returnPressed.connect(self.cadastrar_usuario)
         estilo = """
             font-family: Arial; font-size: 12px;
             background-color: #f0f0f0;
@@ -134,7 +165,23 @@ class RegistrosTela(QWidget):
 
         # Botão de cadastrar
         cadastrar_btn = QPushButton("Cadastrar")
-        cadastrar_btn.setStyleSheet(estilo)
+        cadastrar_btn.setStyleSheet("""
+            QPushButton {
+                font-family: Arial; 
+                font-size: 12px;
+                background-color: #f0f0f0;
+                border: 1px solid #cccccc;
+                padding: 5px;
+                margin-top: 5px;
+            }
+            QPushButton:hover {
+                background-color: #e0e0e0;  /* Cor mais clara no hover */
+            }
+            QPushButton:pressed {
+                background-color: #d0d0d0;  /* Cor mais escura quando pressionado */
+                border-style: inset;  /* Dá uma aparência de botão afundado */
+            }
+        """)
         cadastrar_btn.clicked.connect(self.cadastrar_usuario)
         form_layout.addWidget(cadastrar_btn)
 
@@ -156,11 +203,21 @@ class RegistrosTela(QWidget):
 
         # Estilo dos botões
         estilo_botao = """
-            font-family: Arial; font-size: 12px;
-            background-color: #f0f0f0;
-            border: 1px solid #cccccc;
-            padding: 5px;
-            margin-top: 5px;
+            QPushButton {
+                font-family: Arial; 
+                font-size: 12px;
+                background-color: #f0f0f0;
+                border: 1px solid #cccccc;
+                padding: 5px;
+                margin-top: 5px;
+            }
+            QPushButton:hover {
+                background-color: #e0e0e0;  /* Cor mais clara no hover */
+            }
+            QPushButton:pressed {
+                background-color: #d0d0d0;  /* Cor mais escura quando pressionado */
+                border-style: inset;  /* Dá uma aparência de botão afundado */
+            }
         """
         for btn in [btn_apagar, btn_importar, btn_exportar, btn_modelo]:
             btn.setStyleSheet(estilo_botao)
@@ -176,11 +233,27 @@ class RegistrosTela(QWidget):
         """Carrega os dados do backend e exibe na tabela."""
         registros = carregar_registros()
         self.tabela.setRowCount(len(registros))
+
         for row, registro in enumerate(registros):
-            self.tabela.setItem(row, 0, QTableWidgetItem(registro["ID"]))
+            # Converte o ID para inteiro, com tratamento de erro
+            try:
+                id_valor = int(registro["ID"])
+            except ValueError:
+                id_valor = 0  # Valor padrão caso a conversão falhe
+
+            # Usa a nova classe CustomTableWidgetItem
+            id_item = CustomTableWidgetItem(str(id_valor))
+            id_item.setTextAlignment(Qt.AlignCenter)  # Centraliza o texto
+            id_item.setData(Qt.UserRole, id_valor)  # Define o dado interno como inteiro
+            self.tabela.setItem(row, 0, id_item)
+
+            # Preenche os outros campos como texto
             self.tabela.setItem(row, 1, QTableWidgetItem(registro["Nome"]))
             self.tabela.setItem(row, 2, QTableWidgetItem(registro["Matricula"]))
             self.tabela.setItem(row, 3, QTableWidgetItem(registro["Setor"]))
+
+        # Permite ordenação ao clicar nos cabeçalhos
+        self.tabela.setSortingEnabled(True)
 
     def pesquisar_registros(self):
         """Filtra os registros na tabela com base na pesquisa."""
@@ -204,15 +277,24 @@ class RegistrosTela(QWidget):
         """Adiciona um novo registro."""
         nome = self.nome_input.text().strip()
         matricula = self.matricula_input.text().strip()
-        setor = self.setor_input.text().strip()
+        setor = self.setor_input.text().strip()  # Setor pode ser opcional
 
-        if not nome or not matricula or not setor:
-            QMessageBox.warning(self, "Erro", "Todos os campos devem ser preenchidos.")
+        # Verifica apenas os campos obrigatórios
+        if not nome or not matricula:
+            QMessageBox.warning(self, "Erro", "Os campos Nome e Matrícula são obrigatórios.")
             return
 
         try:
+            # Adiciona o registro ao backend
             novo_registro = adicionar_registro(nome, matricula, setor)
             QMessageBox.information(self, "Sucesso", f"Registro adicionado com sucesso: {novo_registro}")
+
+            # Limpa os campos de entrada
+            self.nome_input.clear()
+            self.matricula_input.clear()
+            self.setor_input.clear()
+
+            # Atualiza os dados exibidos na tabela
             self.carregar_dados()
         except ValueError as e:
             QMessageBox.warning(self, "Erro", str(e))
@@ -225,9 +307,14 @@ class RegistrosTela(QWidget):
             return
 
         ids_para_apagar = [self.tabela.item(linha.row(), 0).text() for linha in linhas_selecionadas]
-        apagar_registros(ids_para_apagar)
-        QMessageBox.information(self, "Sucesso", "Registros apagados com sucesso.")
-        self.carregar_dados()
+        print(f"IDs capturados para apagar: {ids_para_apagar}")
+
+        try:
+            apagar_registros(ids_para_apagar)
+            QMessageBox.information(self, "Sucesso", "Registros apagados com sucesso.")
+            self.carregar_dados()
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", f"Erro ao apagar registros: {e}")
 
     def importar_cadastro(self):
         """Importa registros a partir de um arquivo Excel."""
@@ -242,15 +329,51 @@ class RegistrosTela(QWidget):
 
         if file_path:
             try:
-                registros, erros = importar_excel(file_path)
-                self.carregar_dados()  # Atualiza os dados exibidos na tabela
-                if erros:
-                    mensagem = "\n".join([f"{erro['Erro']}: {erro['Nome']} ({erro['Matricula']})" for erro in erros])
-                    QMessageBox.warning(self, "Erros ao importar", f"Alguns registros não foram importados:\n{mensagem}")
+                # Carrega o arquivo Excel e calcula o total de registros tentados
+                df = pd.read_excel(file_path)  # Lê o Excel para determinar o total de linhas
+                total_tentados = len(df)
+
+                # Importa os dados e coleta erros
+                registros, erros = importar_excel(file_path)  # Importa registros válidos e coleta erros
+
+                # Calcula o total de erros e sucesso
+                total_erros = len(erros)
+                total_sucesso = total_tentados - total_erros
+
+                self.carregar_dados()  # Atualiza a tabela com os registros válidos
+
+                if total_erros > 0:
+                    # Gera o arquivo de erros
+                    erros_path = os.path.join(os.path.dirname(file_path), "Erros_Importacao.xlsx")
+                    gerar_arquivo_erros(erros, erros_path)  # Função no backend
+
+                    # Mensagem customizada com dois botões
+                    msg = QMessageBox(self)
+                    msg.setIcon(QMessageBox.Warning)
+                    msg.setWindowTitle("Importação Concluída com Erros")
+                    msg.setText(f"""
+                        <b>Importação concluída:</b><br>
+                        - <b>{total_sucesso}</b> registros adicionados com sucesso.<br>
+                        - <b>{total_erros}</b> registros apresentaram erros.<br>
+                    """)
+                    msg.setInformativeText("Deseja visualizar os detalhes dos erros?")
+                    
+                    # Botões personalizados
+                    btn_abrir = msg.addButton("Abrir Erros", QMessageBox.AcceptRole)
+                    btn_ok = msg.addButton("OK", QMessageBox.RejectRole)
+                    
+                    # Define a ação do botão "Abrir Erros"
+                    def abrir_erros():
+                        if os.path.exists(erros_path):
+                            os.startfile(erros_path)  # Abre o arquivo no Excel
+
+                    btn_abrir.clicked.connect(abrir_erros)
+                    msg.exec_()
                 else:
-                    QMessageBox.information(self, "Sucesso", "Importação concluída com sucesso!")
+                    QMessageBox.information(self, "Sucesso", f"Todos os registros ({total_sucesso}) foram importados com sucesso!")
             except Exception as e:
                 QMessageBox.critical(self, "Erro", f"Erro ao importar registros: {e}")
+
 
 
     def exportar_cadastro(self):
@@ -259,7 +382,7 @@ class RegistrosTela(QWidget):
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Salvar registros como arquivo Excel",
-            "",
+            "Cadastros EBSoftware",
             "Arquivos Excel (*.xlsx);;Todos os Arquivos (*)",
             options=options
         )
@@ -269,7 +392,7 @@ class RegistrosTela(QWidget):
                 registros = carregar_registros()
                 df = pd.DataFrame(registros)
                 df.to_excel(file_path, index=False)
-                QMessageBox.information(self, "Sucesso", "Registros exportados com sucesso!")
+                QMessageBox.information(self, "Sucesso", f"Registros exportados com sucesso para:\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, "Erro", f"Erro ao exportar registros: {e}")
 
@@ -279,14 +402,14 @@ class RegistrosTela(QWidget):
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Salvar modelo base",
-            "",
+            "Modelo Base Para Cadastros",
             "Arquivos Excel (*.xlsx);;Todos os Arquivos (*)",
             options=options
         )
 
         if file_path:
             try:
-                exportar_modelo(file_path)
-                QMessageBox.information(self, "Sucesso", "Modelo base salvo com sucesso!")
+                exportar_modelo(file_path)  # Função no backend que gera o modelo
+                QMessageBox.information(self, "Sucesso", f"Modelo base salvo com sucesso em:\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, "Erro", f"Erro ao salvar modelo base: {e}")

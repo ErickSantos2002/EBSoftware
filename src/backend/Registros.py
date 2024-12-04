@@ -10,15 +10,18 @@ ARQUIVO_CSV = os.path.join(RESOURCES_DIR, "registros.csv")  # Caminho completo d
 
 # Função para carregar os registros do CSV
 def carregar_registros():
-    """Carrega registros do arquivo CSV e remove inconsistências."""
+    """Carrega registros do arquivo CSV, remove inconsistências e duplicados."""
     if not os.path.exists(ARQUIVO_CSV):
-        return []  # Retorna uma lista vazia se o arquivo não existir
+        return []
     with open(ARQUIVO_CSV, mode="r", newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         registros = []
+        ids_vistos = set()
         for row in reader:
-            # Limpa chaves e valores (remover espaços, caracteres inválidos, etc.)
-            registros.append({k.strip(): v.strip() for k, v in row.items()})
+            row["ID"] = str(row["ID"]).strip()
+            if row["ID"] not in ids_vistos:  # Garante IDs únicos
+                ids_vistos.add(row["ID"])
+                registros.append({k.strip(): v.strip() for k, v in row.items()})
         return registros
 
 # Função para salvar registros no CSV
@@ -29,18 +32,33 @@ def salvar_registros(registros):
         writer.writeheader()
         writer.writerows(registros)
 
-# Função para importar registros de um arquivo Excel
 def importar_excel(file_path):
     """Importa registros de um arquivo Excel."""
     registros = carregar_registros()
     erros = []
 
+    # Calcula o próximo ID disponível com base no maior ID atual
+    max_id = max((int(r["ID"]) for r in registros), default=0)
+
     try:
         df = pd.read_excel(file_path)
+
         for _, row in df.iterrows():
-            nome = row.get("Nome", "").strip()
-            matricula = row.get("Matricula", "").strip()
-            setor = row.get("Setor", "").strip()
+            # Verifica se os valores são NaN ou None antes de converter para string
+            nome = row.get("Nome", "")
+            matricula = row.get("Matricula", "")
+            setor = row.get("Setor", "")
+
+            if pd.isna(nome) or pd.isna(matricula):  # Checa valores nulos ou NaN
+                nome = nome if not pd.isna(nome) else ""  # Substitui NaN por string vazia
+                matricula = matricula if not pd.isna(matricula) else ""
+                erros.append({"Nome": nome, "Matricula": matricula, "Setor": setor, "Erro": "Nome ou Matricula ausente"})
+                continue
+
+            # Converte valores válidos para string e remove espaços em branco
+            nome = str(nome).strip()
+            matricula = str(matricula).strip()
+            setor = str(setor).strip() if not pd.isna(setor) else ""
 
             # Verifica se campos obrigatórios estão preenchidos
             if not nome or not matricula:
@@ -52,10 +70,12 @@ def importar_excel(file_path):
                 erros.append({"Nome": nome, "Matricula": matricula, "Setor": setor, "Erro": "Matricula duplicada"})
                 continue
 
-            # Adiciona registro válido
-            novo_registro = {"ID": str(len(registros) + 1), "Nome": nome, "Matricula": matricula, "Setor": setor}
+            # Calcula o próximo ID
+            max_id += 1
+            novo_registro = {"ID": str(max_id), "Nome": nome, "Matricula": matricula, "Setor": setor}
             registros.append(novo_registro)
 
+        # Salva os registros válidos no arquivo CSV
         salvar_registros(registros)
 
         return registros, erros
@@ -76,19 +96,37 @@ def adicionar_registro(nome, matricula, setor):
     if any(r["Matricula"] == matricula for r in registros):
         raise ValueError("Matrícula duplicada")
 
-    novo_registro = {"ID": str(len(registros) + 1), "Nome": nome, "Matricula": matricula, "Setor": setor}
+    # Calcula o próximo ID disponível com base no maior ID atual
+    max_id = max((int(r["ID"]) for r in registros), default=0)
+    novo_registro = {"ID": str(max_id + 1), "Nome": nome, "Matricula": matricula, "Setor": setor}
+
     registros.append(novo_registro)
     salvar_registros(registros)
 
     return novo_registro
 
-# Função para apagar registros
 def apagar_registros(ids_para_apagar):
     """Apaga os registros com os IDs fornecidos."""
     registros = carregar_registros()
+    print(f"Registros antes da exclusão: {registros}")
+    print(f"IDs para apagar: {ids_para_apagar}")
+
+    ids_para_apagar = set(str(id_) for id_ in ids_para_apagar)  # Converte IDs para strings
     registros_filtrados = [r for r in registros if r["ID"] not in ids_para_apagar]
+
+    print(f"Registros restantes após exclusão: {registros_filtrados}")
     salvar_registros(registros_filtrados)
+
     return registros_filtrados
+
+def gerar_arquivo_erros(erros, file_path):
+    """Salva os registros com erro em um arquivo Excel."""
+    try:
+        # Cria um DataFrame com os erros
+        df_erros = pd.DataFrame(erros)
+        df_erros.to_excel(file_path, index=False)
+    except Exception as e:
+        raise Exception(f"Erro ao gerar arquivo de erros: {e}")
 
 # Teste standalone
 if __name__ == "__main__":

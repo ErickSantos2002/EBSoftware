@@ -1,8 +1,8 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QLabel
-from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect
+from PyQt5.QtGui import QIcon, QFont, QColor
+from PyQt5.QtCore import Qt, QSize, QPropertyAnimation
 
 # Adiciona o diretório "src" ao sys.path
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(top_bar)
 
     def add_buttons_with_icons(self, layout):
-        """Adiciona os botões com ícones e a logo na barra superior."""
+        """Adiciona os botões com ícones e textos abaixo na barra superior, com hover para o texto."""
         ICONES = {
             "Registros": "assets/Registros.png",
             "Testes": "assets/Testes.png",
@@ -83,34 +83,77 @@ class MainWindow(QMainWindow):
             "Informações": "assets/Informacoes.png",
         }
 
-        # Itera sobre os botões
         for nome, icone in ICONES.items():
-            botao = QPushButton()
-            botao.setText(nome)
-            botao.setIcon(QIcon(icone))
-            botao.setIconSize(QSize(40, 40))  # Ajuste do tamanho do ícone
-            botao.setFont(QFont("Arial", 12, QFont.Bold))
-            botao.setStyleSheet(f"""
-                QPushButton {{
-                    border: none;  /* Sem borda */
-                    background: transparent;  /* Sem fundo */
-                    color: {COR_PRETO};  /* Texto na cor preta */
-                }}
-                QPushButton:hover {{
-                    color: {COR_AZUL};  /* Texto azul ao passar o mouse */
-                }}
-            """)
-            botao.clicked.connect(self.criar_conexao(nome))  # Usa a função auxiliar para conectar cada botão
-            layout.addWidget(botao)
+            # Cria o widget para organizar ícone e texto verticalmente
+            botao_widget = QWidget()
+            botao_widget.setStyleSheet("background: transparent;")  # Garante que o widget é transparente
 
-        # Adiciona a logo como um botão clicável
+            botao_layout = QVBoxLayout(botao_widget)
+            botao_layout.setContentsMargins(0, 0, 0, 0)  # Remove margens internas
+            botao_layout.setSpacing(5)  # Espaçamento entre ícone e texto
+
+            # Cria o botão com o ícone
+            botao = QPushButton()
+            botao.setIcon(QIcon(icone))
+            botao.setIconSize(QSize(35, 35))  # Ajusta o tamanho do ícone
+            botao.setStyleSheet("border: none; background: transparent;")
+
+            # Conecta o botão à funcionalidade correspondente
+            botao.clicked.connect(self.criar_conexao(nome))
+
+            # Cria o rótulo do texto abaixo do ícone
+            rotulo = QLabel(nome)
+            rotulo.setAlignment(Qt.AlignCenter)
+            rotulo.setStyleSheet(f"""
+                font-family: ArialBlack;
+                font-size: 14px;
+                font-weight: bold;  /* Negrito no texto */
+                color: black;  /* Preto padrão */
+                background: transparent;  /* Sem fundo */
+            """)
+            
+            def criar_eventos_hover(botao, rotulo):
+                def on_enter(event):
+                    botao.setIconSize(QSize(40, 40))  # Ícone maior
+                    rotulo.setStyleSheet(f"""
+                        font-family: ArialBlack;
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: black;
+                        background: transparent;
+                    """)
+
+                def on_leave(event):
+                    botao.setIconSize(QSize(35, 35))  # Ícone normal
+                    rotulo.setStyleSheet(f"""
+                        font-family: ArialBlack;
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: black;
+                        background: transparent;
+                    """)
+
+                botao.enterEvent = on_enter
+                botao.leaveEvent = on_leave
+
+            # Adiciona eventos de hover
+            criar_eventos_hover(botao, rotulo)
+
+            # Adiciona o botão e o rótulo ao layout vertical
+            botao_layout.addWidget(botao, alignment=Qt.AlignCenter)
+            botao_layout.addWidget(rotulo)
+
+            # Adiciona o widget completo ao layout horizontal
+            layout.addWidget(botao_widget, alignment=Qt.AlignCenter)
+
+        # Adiciona a logo como um botão clicável, sem fundo
         logo_path = "assets/Logo.png"
         logo_button = QPushButton()
         logo_button.setIcon(QIcon(logo_path))
-        logo_button.setIconSize(QSize(80, 40))  # Tamanho ajustado da logo
-        logo_button.setStyleSheet("border: none; background: transparent;")
-        logo_button.clicked.connect(self.resetar_tela_principal)  # Ação ao clicar na logo
-        layout.addWidget(logo_button)
+        logo_button.setIconSize(QSize(140, 80))  # Ajuste do tamanho da logo
+        logo_button.setStyleSheet("border: none; background: transparent;")  # Remove fundo e borda
+        logo_button.clicked.connect(self.resetar_tela_principal)  # Conecta a ação
+        layout.addWidget(logo_button, alignment=Qt.AlignRight)  # Alinha a logo à direita
 
     def criar_conexao(self, nome):
         """Cria uma conexão para o botão com o nome especificado."""
