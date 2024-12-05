@@ -137,7 +137,7 @@ def salvar_resultado(id_teste, id_usuario, nome, matricula, setor, data_hora, re
             "Status": status
         })
 
-def executar_teste(id_usuario, nome, matricula, setor, automatico=False):
+def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callback=None):
     """Executa um teste (manual ou automático) em uma thread separada."""
     def executar():
         global executando_automatico, executando_manual
@@ -149,49 +149,67 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False):
 
         try:
             while (executando_automatico if automatico else executando_manual):
-                enviar_comando("$START")
+                enviar_comando("$START")  # Envia o comando para iniciar o teste
+
                 while (executando_automatico if automatico else executando_manual):
-                    resposta = ler_resposta()
+                    resposta = ler_resposta()  # Lê a resposta da porta serial
+
                     if resposta and resposta.startswith("$RESULT"):
                         # Extrai informações do resultado
-                        id_teste = proximo_id_teste()
+                        id_teste = proximo_id_teste()  # Calcula o próximo ID de teste
                         data_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        resultado = resposta.split(",")[1]
-                        quantidade, status = resultado.split("-")
-                        status = "Aprovado" if status == "OK" else "Rejeitado"
-
-                        # Salva o resultado
-                        salvar_resultado(
-                            id_teste,
-                            id_usuario if not automatico else 0,
-                            nome if not automatico else "Automático",
-                            matricula if not automatico else "Automático",
-                            setor if not automatico else "Automático",
-                            data_hora,
-                            resultado,
-                        )
-                        print(f"Teste {'automático' if automatico else 'manual'} realizado com sucesso: {resultado}")
-
-                        # Exibe o resultado no MessageBox apenas para teste manual
-                        if not automatico:
-                            from PyQt5.QtWidgets import QMessageBox
-                            msg = QMessageBox()
-                            msg.setIcon(QMessageBox.Information)
-                            msg.setWindowTitle("Resultado do Teste")
-                            msg.setText(f"Quantidade de Álcool: {quantidade}\nStatus: {status}")
-                            msg.exec_()
-
+                        resultado = resposta.split(",")[1]  # Exemplo: "0.000-OK"
+                        
                         if automatico:
-                            break  # Reinicia o processo para o próximo teste
+                            # Salva o resultado como "Automático"
+                            salvar_resultado(
+                                id_teste=id_teste,
+                                id_usuario=0,  # ID do usuário sempre 0
+                                nome="Automático",
+                                matricula="Automático",
+                                setor="Automático",
+                                data_hora=data_hora,
+                                resultado=resultado
+                            )
                         else:
-                            return  # Encerra o teste manual
-                    elif resposta:
-                        print(f"Aguardando resultado: {resposta}")
-                time.sleep(1)  # Pequeno delay entre os testes automáticos
+                            # Salva o resultado do teste manual
+                            salvar_resultado(
+                                id_teste=id_teste,
+                                id_usuario=id_usuario,
+                                nome=nome,
+                                matricula=matricula,
+                                setor=setor,
+                                data_hora=data_hora,
+                                resultado=resultado
+                            )
+
+                        # Executa o callback com o resultado
+                        if callback:
+                            callback(resultado)
+
+                        # Se for manual, encerra o teste após um único resultado
+                        if not automatico:
+                            return resultado
+
+                        # Se for automático e o resultado for "HIGH", para o loop
+                        if automatico and "HIGH" in resultado:
+                            executando_automatico = False
+                            break  # Sai do loop interno
+
+                        # Se for automático e o resultado for "OK", continua
+                        if automatico and "OK" in resultado:
+                            print("Teste automático aprovado, continuando...")
+                            break  # Sai do loop interno e volta ao início
+
+                # Delay entre testes automáticos para evitar congestionamento
+                if automatico:
+                    time.sleep(1)
+
         except Exception as e:
             print(f"Erro durante o teste {'automático' if automatico else 'manual'}: {e}")
+            raise
         finally:
-            enviar_comando("$RESET")
+            enviar_comando("$RESET")  # Garante que o dispositivo é resetado
             if automatico:
                 executando_automatico = False
             else:
@@ -201,7 +219,6 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False):
     # Inicia o teste em uma thread separada
     thread = Thread(target=executar, daemon=True)
     thread.start()
-    print(f"Teste {'automático' if automatico else 'manual'} iniciado em thread separada.")
 
 # Funções para iniciar e parar os testes
 def iniciar_teste_manual(id_usuario, nome, matricula, setor):

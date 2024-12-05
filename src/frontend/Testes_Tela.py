@@ -2,20 +2,23 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem,
     QPushButton, QMessageBox, QHeaderView, QLineEdit
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal, QObject
 from src.backend.Registros import carregar_registros
 from src.backend.Testes import (
     iniciar_teste_manual, parar_testes,
-    iniciar_teste_automatico, parar_testes
+    iniciar_teste_automatico, parar_testes, executar_teste
 )
 from threading import Thread
 
 class TestesTela(QWidget):
+    resultado_recebido = pyqtSignal(str)  # Sinal para transmitir resultados do backend
     def __init__(self, parent=None):
         super().__init__(parent)
 
         # Layout principal
         main_layout = QVBoxLayout(self)
+
+        self.resultado_recebido.connect(self.mostrar_resultado)
 
         # Painel superior: barra de pesquisa
         search_layout = QHBoxLayout()
@@ -163,34 +166,57 @@ class TestesTela(QWidget):
         matricula = self.tabela.item(linha, 2).text()
         setor = self.tabela.item(linha, 3).text()
 
-        def executar_teste():
-            try:
-                resultado = iniciar_teste_manual(id_usuario, nome, matricula, setor)
-                if resultado.startswith("0.000-OK"):
-                    self.exibir_messagebox("sucesso", f"Teste realizado com sucesso!\nResultado: {resultado}")
-                else:
-                    self.exibir_messagebox("erro", f"Teste retornou um resultado inesperado: {resultado}")
-            except Exception as e:
-                self.exibir_messagebox("erro", f"Erro ao realizar o teste: {e}")
+        def callback(resultado):
+            # Emite o sinal quando o backend retornar o resultado
+            self.resultado_recebido.emit(resultado)
 
-        # Inicia a execução do teste em uma thread separada
-        thread = Thread(target=executar_teste, daemon=True)
-        thread.start()
-
-    def exibir_messagebox(self, tipo, mensagem):
-        """Exibe uma mensagem dependendo do tipo."""
-        if tipo == "sucesso":
-            QMessageBox.information(self, "Resultado do Teste", mensagem)
-        elif tipo == "erro":
-            QMessageBox.critical(self, "Erro", mensagem)
+        # Executa o teste no backend
+        try:
+            from src.backend.Testes import executar_teste
+            executar_teste(id_usuario, nome, matricula, setor, automatico=False, callback=callback)
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", f"Erro ao iniciar o teste manual: {e}")
 
     def iniciar_teste_automatico(self):
-        """Inicia testes automáticos."""
+        """Inicia testes automáticos e para ao encontrar um resultado reprovado (HIGH)."""
+        def callback(resultado):
+            # Processa o resultado recebido do backend
+            quantidade, status = resultado.split("-")  # Divide o resultado em quantidade e status
+
+            if status == "HIGH":
+                # Mostra a mensagem para resultados reprovados e para os testes automáticos
+                self.resultado_recebido.emit(resultado)
+                try:
+                    from src.backend.Testes import parar_testes
+                    parar_testes()  # Envia comando para parar o teste
+                except Exception as e:
+                    QMessageBox.critical(self, "Erro", f"Erro ao parar os testes automáticos: {e}")
+
+        # Inicia os testes automáticos no backend
         try:
-            resultado = iniciar_teste_automatico()
-            QMessageBox.information(self, "Resultado do Teste Automático", f"Teste realizado com sucesso!\nResultado: {resultado}")
+            from src.backend.Testes import executar_teste
+            executar_teste(None, None, None, None, automatico=True, callback=callback)
         except Exception as e:
-            QMessageBox.critical(self, "Erro", f"Erro ao realizar o teste automático: {e}")
+            QMessageBox.critical(self, "Erro", f"Erro ao iniciar os testes automáticos: {e}")
+
+    def mostrar_resultado(self, resultado):
+        """Mostra o resultado recebido do backend em um QMessageBox."""
+        try:
+            quantidade, status = resultado.split("-")  # Divide o resultado em quantidade e status
+            
+            if status == "OK":
+                mensagem = f"Teste aprovado, quantidade do álcool: {quantidade}"
+            elif status == "HIGH":
+                mensagem = (
+                    f"Teste reprovado, Quantidade do álcool: {quantidade}\n"
+                    f"Recomenda-se aguardar 5 minutos antes de iniciar um novo teste."
+                )
+            else:
+                mensagem = f"Resultado inesperado: {resultado}"  # Mensagem para casos não tratados
+
+            QMessageBox.information(self, "Resultado do Teste", mensagem)
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", f"Erro ao processar o resultado: {e}")
 
     def parar_testes(self):
         """Envia o comando $RESET para parar os testes."""

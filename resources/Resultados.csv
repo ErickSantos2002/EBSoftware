@@ -41,3 +41,22 @@ ID do teste,ID do usuário,Nome,Matrícula,Setor,Data e hora,Quantidade de Álco
 34,0,Automático,Automático,Automático,2024-12-04 16:16:23,0.000,Aprovado
 35,1,Erick Silva,1001,TI,2024-12-04 16:16:38,0.000,Aprovado
 36,1,Erick Silva,1001,TI,2024-12-04 16:20:51,0.000,Aprovado
+37,1,Erick Silva,1001,TI,2024-12-05 10:13:27,0.000,Aprovado
+38,0,Automático,Automático,Automático,2024-12-05 10:14:11,0.000,Aprovado
+39,1,Erick Silva,1001,TI,2024-12-05 10:20:11,0.000,Aprovado
+40,1,Erick Silva,1001,TI,2024-12-05 10:57:23,0.000,Aprovado
+41,1,Erick Silva,1001,TI,2024-12-05 10:58:07,0.000,Aprovado
+42,1,Erick Silva,1001,TI,2024-12-05 11:32:15,0.000,Aprovado
+43,3,Paulo Lima,1003,Financeiro,2024-12-05 11:40:09,0.000,Aprovado
+44,3,Paulo Lima,1003,Financeiro,2024-12-05 11:41:59,0.120,Rejeitado
+45,4,Ana Oliveira,1004,Recursos Humanos,2024-12-05 11:55:13,0.000,Aprovado
+46,4,Ana Oliveira,1004,Recursos Humanos,2024-12-05 11:55:32,0.075,Rejeitado
+47,4,Ana Oliveira,1004,Recursos Humanos,2024-12-05 11:55:56,0.000,Aprovado
+48,0,Automático,Automático,Automático,2024-12-05 11:56:24,0.000,Aprovado
+49,5,João Pedro,1005,Marketing,2024-12-05 12:13:25,0.000,Aprovado
+50,0,Automático,Automático,Automático,2024-12-05 12:13:38,0.000,Aprovado
+51,0,Automático,Automático,Automático,2024-12-05 12:14:35,0.000,Aprovado
+52,0,Automático,Automático,Automático,2024-12-05 12:17:30,1.060,Rejeitado
+53,0,Automático,Automático,Automático,2024-12-05 12:19:01,0.000,Aprovado
+54,0,Automático,Automático,Automático,2024-12-05 12:19:19,0.000,Aprovado
+55,58,Djalma Neto,058,RH,2024-12-05 12:20:07,0.000,Aprovado
