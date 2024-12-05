@@ -112,16 +112,24 @@ def proximo_id_teste():
         ids = [int(row["ID do teste"]) for row in reader if row["ID do teste"].isdigit()]
         return max(ids) + 1 if ids else 1
 
+from datetime import datetime
+
 # Função para salvar resultados
 def salvar_resultado(id_teste, id_usuario, nome, matricula, setor, data_hora, resultado):
     """Salva o resultado do teste no arquivo CSV."""
     quantidade, status = resultado.split("-")  # Exemplo: "0.000-OK" ou "1.125-HIGH"
 
+    # Ajusta o status para "Aprovado" ou "Rejeitado"
     if status == "OK":
         status = "Aprovado"
     elif status == "HIGH":
         status = "Rejeitado"
 
+    # Formata a data no estilo DD/MM/YYYY HH:MM:SS
+    if isinstance(data_hora, datetime):
+        data_hora = data_hora.strftime("%d/%m/%Y %H:%M:%S")
+
+    # Salva os dados no arquivo CSV
     with open(ARQUIVO_RESULTADOS, mode="a", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=[
             "ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Quantidade de Álcool", "Status"
@@ -132,7 +140,7 @@ def salvar_resultado(id_teste, id_usuario, nome, matricula, setor, data_hora, re
             "Nome": nome,
             "Matrícula": matricula,
             "Setor": setor,
-            "Data e hora": data_hora,
+            "Data e hora": data_hora,  # Já no formato correto
             "Quantidade de Álcool": quantidade,
             "Status": status
         })
@@ -142,6 +150,7 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
     def executar():
         global executando_automatico, executando_manual
 
+        # Define o estado do teste
         if automatico:
             executando_automatico = True
         else:
@@ -150,58 +159,40 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
         try:
             while (executando_automatico if automatico else executando_manual):
                 enviar_comando("$START")  # Envia o comando para iniciar o teste
-
                 while (executando_automatico if automatico else executando_manual):
                     resposta = ler_resposta()  # Lê a resposta da porta serial
 
                     if resposta and resposta.startswith("$RESULT"):
                         # Extrai informações do resultado
-                        id_teste = proximo_id_teste()  # Calcula o próximo ID de teste
-                        data_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        id_teste = proximo_id_teste()
+                        data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # Ajuste aqui!
                         resultado = resposta.split(",")[1]  # Exemplo: "0.000-OK"
-                        
-                        if automatico:
-                            # Salva o resultado como "Automático"
-                            salvar_resultado(
-                                id_teste=id_teste,
-                                id_usuario=0,  # ID do usuário sempre 0
-                                nome="Automático",
-                                matricula="Automático",
-                                setor="Automático",
-                                data_hora=data_hora,
-                                resultado=resultado
-                            )
-                        else:
-                            # Salva o resultado do teste manual
-                            salvar_resultado(
-                                id_teste=id_teste,
-                                id_usuario=id_usuario,
-                                nome=nome,
-                                matricula=matricula,
-                                setor=setor,
-                                data_hora=data_hora,
-                                resultado=resultado
-                            )
+                        quantidade, status = resultado.split("-")
+                        status = "Aprovado" if status == "OK" else "Rejeitado"
 
-                        # Executa o callback com o resultado
+                        # Salva o resultado no arquivo
+                        salvar_resultado(
+                            id_teste,
+                            id_usuario if not automatico else 0,
+                            nome if not automatico else "Automático",
+                            matricula if not automatico else "Automático",
+                            setor if not automatico else "Automático",
+                            data_hora,  # Já no formato correto
+                            resultado,
+                        )
+                        print(f"Teste {'automático' if automatico else 'manual'} realizado com sucesso: {resultado}")
+
+                        # Notifica o callback (se fornecido)
                         if callback:
                             callback(resultado)
 
-                        # Se for manual, encerra o teste após um único resultado
-                        if not automatico:
-                            return resultado
+                        # Retorna o resultado para o frontend
+                        return resultado
 
-                        # Se for automático e o resultado for "HIGH", para o loop
-                        if automatico and "HIGH" in resultado:
-                            executando_automatico = False
-                            break  # Sai do loop interno
+                    elif resposta:  # Log de respostas intermediárias
+                        print(f"Aguardando resultado: {resposta}")
 
-                        # Se for automático e o resultado for "OK", continua
-                        if automatico and "OK" in resultado:
-                            print("Teste automático aprovado, continuando...")
-                            break  # Sai do loop interno e volta ao início
-
-                # Delay entre testes automáticos para evitar congestionamento
+                # Pequeno delay entre testes automáticos para evitar congestionamento
                 if automatico:
                     time.sleep(1)
 
@@ -219,6 +210,7 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
     # Inicia o teste em uma thread separada
     thread = Thread(target=executar, daemon=True)
     thread.start()
+    print(f"Teste {'automático' if automatico else 'manual'} iniciado em thread separada.")
 
 # Funções para iniciar e parar os testes
 def iniciar_teste_manual(id_usuario, nome, matricula, setor):

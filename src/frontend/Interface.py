@@ -164,7 +164,7 @@ class MainWindow(QMainWindow):
             elif nome == "Testes":
                 self.abrir_modulo("Testes_Tela")
             elif nome == "Resultados":
-                self.abrir_modulo("Resultados.py")
+                self.abrir_modulo("Resultados_Tela")
             elif nome == "Configurações":
                 self.abrir_modulo("Configuracoes.py")
             elif nome == "Informações":
@@ -187,11 +187,17 @@ class MainWindow(QMainWindow):
             self.tela_testes = TestesTela(self)
             self.stacked_layout.addWidget(self.tela_testes)
 
+            from frontend.Resultados_Tela import ResultadosTela
+            self.tela_resultados = ResultadosTela(self)
+            self.stacked_layout.addWidget(self.tela_resultados)
+
         # Alterna para o módulo apropriado
         if modulo == "Registros_Tela":
             self.stacked_layout.setCurrentWidget(self.tela_registros)
         elif modulo == "Testes_Tela":
             self.stacked_layout.setCurrentWidget(self.tela_testes)
+        elif modulo == "Resultados_Tela":
+            self.stacked_layout.setCurrentWidget(self.tela_resultados)
         else:
             print(f"Módulo {modulo} não encontrado.")
 

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem,
-    QPushButton, QMessageBox, QHeaderView, QLineEdit
+    QPushButton, QMessageBox, QHeaderView, QLineEdit, QFrame
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QObject
 from src.backend.Registros import carregar_registros
@@ -15,8 +15,15 @@ class TestesTela(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Layout principal
-        main_layout = QVBoxLayout(self)
+        # Criação do frame principal com fundo branco
+        self.frame = QFrame(self)
+        self.frame.setStyleSheet("background-color: white; border: none;")
+        main_layout = QVBoxLayout(self.frame)
+
+        # Define o layout principal da janela
+        final_layout = QVBoxLayout(self)
+        final_layout.addWidget(self.frame)
+
 
         self.resultado_recebido.connect(self.mostrar_resultado)
 
