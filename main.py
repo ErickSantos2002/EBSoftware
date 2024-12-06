@@ -1,12 +1,15 @@
 import sys
 import os
 
-# Adiciona o diretório "src" ao sys.path
-base_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(base_dir, "src")
+# Determina o caminho base, considerando se está rodando como executável ou script
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)  # Diretório do executável
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Diretório do script
+src_dir = os.path.join(BASE_DIR, "src")
 sys.path.append(src_dir)
 
-from frontend.Interface import MainWindow  # Importa a classe MainWindow da interface
+from src.frontend.Interface import MainWindow  # Importa a classe MainWindow da interface
 from PyQt5.QtWidgets import QApplication
 
 if __name__ == "__main__":

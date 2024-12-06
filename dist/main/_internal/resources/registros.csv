@@ -1,0 +1,54 @@
+ID,Nome,Matricula,Setor
+1,Erick Silva,1001,TI
+3,Paulo Lima,1003,Financeiro
+4,Ana Oliveira,1004,Recursos Humanos
+5,João Pedro,1005,Marketing
+6,Maria Clara,1006,Logística
+7,Carlos Eduardo,1007,Vendas
+8,Juliana Mendes,1008,Produção
+9,Fernando Costa,1009,Pesquisa e Desenvolvimento
+10,1,1,1
+11,Usuário 1,MAT0001,Setor 2
+12,Usuário 2,MAT0002,Setor 3
+13,Usuário 3,MAT0003,Setor 4
+14,Usuário 4,MAT0004,Setor 5
+15,Usuário 5,MAT0005,Setor 1
+16,Usuário 6,MAT0006,Setor 2
+17,Usuário 7,MAT0007,Setor 3
+18,Usuário 8,MAT0008,Setor 4
+20,Usuário 10,MAT0010,Setor 1
+21,Usuário 11,MAT0011,Setor 2
+22,Usuário 12,MAT0012,Setor 3
+23,Usuário 13,MAT0013,Setor 4
+24,Usuário 14,MAT0014,Setor 5
+25,Usuário 15,MAT0015,Setor 1
+26,Usuário 16,MAT0016,Setor 2
+27,Usuário 17,MAT0017,Setor 3
+28,Usuário 18,MAT0018,Setor 4
+29,Usuário 19,MAT0019,Setor 5
+30,Usuário 20,MAT0020,Setor 1
+31,Usuário 21,MAT0021,Setor 2
+32,Usuário 22,MAT0022,Setor 3
+33,Usuário 23,MAT0023,Setor 4
+34,Usuário 24,MAT0024,Setor 5
+35,Usuário 25,MAT0025,Setor 1
+36,Usuário 26,MAT0026,Setor 2
+37,Usuário 27,MAT0027,Setor 3
+38,Usuário 28,MAT0028,Setor 4
+39,Usuário 29,MAT0029,Setor 5
+40,Usuário 30,MAT0030,Setor 1
+41,Usuário 31,MAT0031,Setor 2
+42,Usuário 32,MAT0032,Setor 3
+43,Usuário 33,MAT0033,Setor 4
+44,Usuário 34,MAT0034,Setor 5
+45,Usuário 35,MAT0035,Setor 1
+47,Usuário 37,MAT0037,Setor 3
+48,Usuário 38,MAT0038,Setor 4
+49,Usuário 39,MAT0039,Setor 5
+52,Usuário 36,MAT0036,Setor 2
+53,Usuário 40,MAT0040,Setor 1
+54,Walbert,75,Laboratorio
+55,9,9,
+56,Welton,54,Suporte
+57,66,16,
+58,Djalma Neto,058,RH

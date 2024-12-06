@@ -6,9 +6,13 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QWidget,
 from PyQt5.QtGui import QIcon, QFont, QColor
 from PyQt5.QtCore import Qt, QSize, QPropertyAnimation
 
-# Adiciona o diretório "src" ao sys.path
-base_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(base_dir, "src")
+if getattr(sys, 'frozen', False):
+    # Diretório do executável (quando empacotado com PyInstaller)
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # Diretório raiz do projeto (quando executado como script)
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+src_dir = os.path.join(BASE_DIR, "src")
 sys.path.append(src_dir)
 
 # Cores e Estilos
@@ -25,7 +29,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1200, 800)
 
         # Define o ícone da janela
-        self.setWindowIcon(QIcon("assets/HS2.ico"))  # Substitua "assets/Logo.ico" pelo caminho correto do ícone
+        self.setWindowIcon(QIcon(os.path.join(BASE_DIR, "assets", "HS2.ico")))
 
         # Configurações de estilo geral
         self.setStyleSheet("""
@@ -88,14 +92,18 @@ class MainWindow(QMainWindow):
     def add_buttons_with_icons(self, layout):
         """Adiciona os botões com ícones e textos abaixo na barra superior, com hover para o texto."""
         ICONES = {
-            "Registros": "assets/Registros.png",
-            "Testes": "assets/Testes.png",
-            "Resultados": "assets/Resultados.png",
-            "Configurações": "assets/Configuracoes.png",
-            "Informações": "assets/Informacoes.png",
+            "Registros": os.path.join("assets", "Registros.png"),
+            "Testes": os.path.join("assets", "Testes.png"),
+            "Resultados": os.path.join("assets", "Resultados.png"),
+            "Configurações": os.path.join("assets", "Configuracoes.png"),
+            "Informações": os.path.join("assets", "Informacoes.png"),
         }
 
         for nome, icone in ICONES.items():
+            # Caminho completo do ícone
+            caminho_completo = os.path.join(BASE_DIR, icone)
+            print(f"Carregando ícone para '{nome}': {caminho_completo}")  # Adicionado para debug
+
             # Cria o widget para organizar ícone e texto verticalmente
             botao_widget = QWidget()
             botao_widget.setStyleSheet("background: transparent;")  # Garante que o widget é transparente
@@ -106,7 +114,7 @@ class MainWindow(QMainWindow):
 
             # Cria o botão com o ícone
             botao = QPushButton()
-            botao.setIcon(QIcon(icone))
+            botao.setIcon(QIcon(caminho_completo))
             botao.setIconSize(QSize(35, 35))  # Ajusta o tamanho do ícone
             botao.setStyleSheet("border: none; background: transparent;")
 
@@ -123,33 +131,6 @@ class MainWindow(QMainWindow):
                 color: black;  /* Preto padrão */
                 background: transparent;  /* Sem fundo */
             """)
-            
-            def criar_eventos_hover(botao, rotulo):
-                def on_enter(event):
-                    botao.setIconSize(QSize(40, 40))  # Ícone maior
-                    rotulo.setStyleSheet(f"""
-                        font-family: ArialBlack;
-                        font-size: 18px;
-                        font-weight: bold;
-                        color: black;
-                        background: transparent;
-                    """)
-
-                def on_leave(event):
-                    botao.setIconSize(QSize(35, 35))  # Ícone normal
-                    rotulo.setStyleSheet(f"""
-                        font-family: ArialBlack;
-                        font-size: 14px;
-                        font-weight: bold;
-                        color: black;
-                        background: transparent;
-                    """)
-
-                botao.enterEvent = on_enter
-                botao.leaveEvent = on_leave
-
-            # Adiciona eventos de hover
-            criar_eventos_hover(botao, rotulo)
 
             # Adiciona o botão e o rótulo ao layout vertical
             botao_layout.addWidget(botao, alignment=Qt.AlignCenter)
@@ -159,7 +140,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(botao_widget, alignment=Qt.AlignCenter)
 
         # Adiciona a logo como um botão clicável, sem fundo
-        logo_path = "assets/Logo.png"
+        logo_path = os.path.join(BASE_DIR, "assets", "Logo.png")
         logo_button = QPushButton()
         logo_button.setIcon(QIcon(logo_path))
         logo_button.setIconSize(QSize(140, 80))  # Ajuste do tamanho da logo
@@ -189,23 +170,23 @@ class MainWindow(QMainWindow):
             self.main_area.setLayout(self.stacked_layout)
             
             # Adiciona os módulos ao layout empilhado
-            from frontend.Registros_Tela import RegistrosTela
+            from src.frontend.Registros_Tela import RegistrosTela
             self.tela_registros = RegistrosTela(self)
             self.stacked_layout.addWidget(self.tela_registros)
 
-            from frontend.Testes_Tela import TestesTela
+            from src.frontend.Testes_Tela import TestesTela
             self.tela_testes = TestesTela(self)
             self.stacked_layout.addWidget(self.tela_testes)
 
-            from frontend.Resultados_Tela import ResultadosTela
+            from src.frontend.Resultados_Tela import ResultadosTela
             self.tela_resultados = ResultadosTela(self)
             self.stacked_layout.addWidget(self.tela_resultados)
 
-            from frontend.Configuracoes_Tela import ConfiguracoesTela
+            from src.frontend.Configuracoes_Tela import ConfiguracoesTela
             self.tela_configuracoes = ConfiguracoesTela(self)
             self.stacked_layout.addWidget(self.tela_configuracoes)
 
-            from frontend.Informacoes_Tela import  InformacoesTela
+            from src.frontend.Informacoes_Tela import  InformacoesTela
             self.tela_informacoes = InformacoesTela(self)
             self.stacked_layout.addWidget(self.tela_informacoes)
 
@@ -225,7 +206,7 @@ class MainWindow(QMainWindow):
 
     def carregar_registros(self, layout):
         """Carrega a tela de Registros_Tela na área principal."""
-        from frontend.Registros_Tela import RegistrosTela  # Importa o widget da tela de registros
+        from src.frontend.Registros_Tela import RegistrosTela  # Importa o widget da tela de registros
         
         # Limpa widgets anteriores da área principal
         for i in reversed(range(layout.count())):

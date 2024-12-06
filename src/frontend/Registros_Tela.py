@@ -10,8 +10,12 @@ from src.backend.Registros import (carregar_registros, adicionar_registro,
     apagar_registros, importar_excel, exportar_modelo, exportar_modelo, gerar_arquivo_erros
 )
 
-# Caminho para garantir o diretório src no sys.path
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    # Diretório do executável (quando empacotado com PyInstaller)
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # Diretório raiz do projeto (quando executado como script)
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SRC_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
 
 if SRC_DIR not in sys.path:

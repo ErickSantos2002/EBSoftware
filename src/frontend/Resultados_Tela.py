@@ -6,7 +6,6 @@ from PyQt5.QtCore import Qt, QDate, pyqtSignal, QObject
 from src.backend.Resultados import carregar_resultados, filtrar_resultados, salvar_em_excel, salvar_em_pdf
 from src.backend.Testes import sinal_global  # Importa o gerenciador de sinais
 
-
 class ResultadosTela(QWidget):
     # Sinal para atualizar os resultados
     atualizar_resultados_signal = pyqtSignal()

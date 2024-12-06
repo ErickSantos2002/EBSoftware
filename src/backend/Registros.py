@@ -1,9 +1,14 @@
 import os
 import csv
 import pandas as pd
+import sys
 
-# Caminho base para o diretório do projeto
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Caminho do arquivo atual (backend)
+if getattr(sys, 'frozen', False):
+    # Diretório do executável (quando empacotado com PyInstaller)
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # Diretório raiz do projeto (quando executado como script)
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 PROJECT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))  # Sai de src/backend
 RESOURCES_DIR = os.path.join(PROJECT_DIR, "resources")  # Caminho do diretório resources
 ARQUIVO_CSV = os.path.join(RESOURCES_DIR, "registros.csv")  # Caminho completo do arquivo CSV

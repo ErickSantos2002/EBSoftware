@@ -1,9 +1,14 @@
 import os
 import serial
 import configparser
+import sys
 
-# Caminhos dos arquivos de configuração
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    # Diretório do executável (quando empacotado com PyInstaller)
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # Diretório raiz do projeto (quando executado como script)
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
 RESOURCES_DIR = os.path.join(PROJECT_DIR, "resources")
 CONFIG_FILE = os.path.join(RESOURCES_DIR, "config.ini")

@@ -5,12 +5,16 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
-# Adiciona o caminho do backend ao sys.path
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    # Diretório do executável (quando empacotado com PyInstaller)
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # Diretório raiz do projeto (quando executado como script)
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 BACKEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "backend"))
 sys.path.append(BACKEND_DIR)
 
-from backend.Configuracoes import salvar_porta_configurada, buscar_porta_automatica, carregar_porta_configurada
+from src.backend.Configuracoes import salvar_porta_configurada, buscar_porta_automatica, carregar_porta_configurada
 import serial.tools.list_ports
 
 class ConfiguracoesTela(QWidget):

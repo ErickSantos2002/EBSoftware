@@ -1,12 +1,17 @@
 import os
+import sys
 import csv
 import pandas as pd
 from datetime import datetime
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 
-# Caminho base para o diretório do projeto
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Caminho do arquivo atual (backend)
+if getattr(sys, 'frozen', False):
+    # Diretório do executável (quando empacotado com PyInstaller)
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # Diretório raiz do projeto (quando executado como script)
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))  # Sai de src/backend
 RESOURCES_DIR = os.path.join(PROJECT_DIR, "resources")  # Caminho do diretório resources
 
