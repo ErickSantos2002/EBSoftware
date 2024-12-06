@@ -2,7 +2,7 @@ import os
 import sys
 import pandas as pd
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QApplication,
     QPushButton, QLineEdit, QFormLayout, QMessageBox, QHeaderView, QFrame, QFileDialog, QMessageBox
 )
 from PyQt5.QtCore import Qt
@@ -270,7 +270,13 @@ class RegistrosTela(QWidget):
 
         self.tabela.setRowCount(len(registros_filtrados))
         for row, registro in enumerate(registros_filtrados):
-            self.tabela.setItem(row, 0, QTableWidgetItem(registro["ID"]))
+            # Configura o ID como CustomTableWidgetItem para manter a ordenação
+            id_item = CustomTableWidgetItem(registro["ID"])
+            id_item.setTextAlignment(Qt.AlignCenter)
+            id_item.setData(Qt.UserRole, int(registro["ID"]))  # Define o dado interno para ordenação
+            self.tabela.setItem(row, 0, id_item)
+
+            # Preenche os outros campos como texto
             self.tabela.setItem(row, 1, QTableWidgetItem(registro["Nome"]))
             self.tabela.setItem(row, 2, QTableWidgetItem(registro["Matricula"]))
             self.tabela.setItem(row, 3, QTableWidgetItem(registro["Setor"]))

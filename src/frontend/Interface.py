@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QWidget, 
-    QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect, QStackedLayout
+    QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect, QStackedLayout, QMessageBox
 )
 from PyQt5.QtGui import QIcon, QFont, QColor
 from PyQt5.QtCore import Qt, QSize, QPropertyAnimation
@@ -166,9 +166,9 @@ class MainWindow(QMainWindow):
             elif nome == "Resultados":
                 self.abrir_modulo("Resultados_Tela")
             elif nome == "Configurações":
-                self.abrir_modulo("Configuracoes.py")
+                self.abrir_modulo("Configuracoes_Tela")
             elif nome == "Informações":
-                self.abrir_modulo("Informacoes.py")
+                self.abrir_modulo("Informacoes_Tela")
         return on_click
     
     def abrir_modulo(self, modulo):
@@ -191,6 +191,14 @@ class MainWindow(QMainWindow):
             self.tela_resultados = ResultadosTela(self)
             self.stacked_layout.addWidget(self.tela_resultados)
 
+            from frontend.Configuracoes_Tela import ConfiguracoesTela
+            self.tela_configuracoes = ConfiguracoesTela(self)
+            self.stacked_layout.addWidget(self.tela_configuracoes)
+
+            from frontend.Informacoes_Tela import  InformacoesTela
+            self.tela_informacoes = InformacoesTela(self)
+            self.stacked_layout.addWidget(self.tela_informacoes)
+
         # Alterna para o módulo apropriado
         if modulo == "Registros_Tela":
             self.stacked_layout.setCurrentWidget(self.tela_registros)
@@ -198,6 +206,10 @@ class MainWindow(QMainWindow):
             self.stacked_layout.setCurrentWidget(self.tela_testes)
         elif modulo == "Resultados_Tela":
             self.stacked_layout.setCurrentWidget(self.tela_resultados)
+        elif modulo == "Configuracoes_Tela":
+            self.stacked_layout.setCurrentWidget(self.tela_configuracoes)
+        elif modulo == "Informacoes_Tela":
+            self.stacked_layout.setCurrentWidget(self.tela_informacoes)
         else:
             print(f"Módulo {modulo} não encontrado.")
 
