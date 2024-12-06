@@ -24,8 +24,18 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("EBS-010 Interface")
         self.setGeometry(100, 100, 1200, 800)
 
+        # Define o ícone da janela
+        self.setWindowIcon(QIcon("assets/HS2.ico"))  # Substitua "assets/Logo.ico" pelo caminho correto do ícone
+
         # Configurações de estilo geral
-        self.setStyleSheet(f"background-color: {COR_CINZA};")
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: white; /* Ou use COR_BRANCA */
+            }
+            QWidget#main_area {
+                background-color: #969595; /* Ou use COR_CINZA */
+            }
+        """)
 
         # Layout principal
         central_widget = QWidget()
@@ -39,7 +49,7 @@ class MainWindow(QMainWindow):
 
         # Área principal
         self.main_area = QWidget()
-        self.main_area.setStyleSheet(f"background-color: {COR_CINZA};")
+        self.main_area.setObjectName("main_area")  # Identificador CSS para aplicar estilo
         main_layout.addWidget(self.main_area)
 
     def create_top_bar(self, layout):
