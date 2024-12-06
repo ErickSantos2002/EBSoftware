@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QDate, pyqtSignal, QObject
 from src.backend.Resultados import carregar_resultados, filtrar_resultados, salvar_em_excel, salvar_em_pdf
+from src.backend.Testes import sinal_global  # Importa o gerenciador de sinais
 
 
 class ResultadosTela(QWidget):
@@ -12,6 +13,8 @@ class ResultadosTela(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        sinal_global.resultado_atualizado.connect(self.atualizar_tabela)
         self.setStyleSheet("background-color: white;")
         self.setWindowTitle("Resultados")
         self.setGeometry(100, 100, 1200, 600)
@@ -221,7 +224,7 @@ class ResultadosTela(QWidget):
         # Recarrega a tabela com os resultados filtrados
         self.carregar_tabela(filtrados)
 
-    def salvar_excel(self):
+    def salvar_excel(self): 
         """Salva os resultados filtrados atualmente exibidos na tabela em um arquivo Excel."""
         caminho, _ = QFileDialog.getSaveFileName(self, "Salvar em Excel", "", "Arquivos Excel (*.xlsx)")
         if not caminho:
@@ -239,11 +242,10 @@ class ResultadosTela(QWidget):
         # Cabeçalhos da tabela
         colunas = [self.tabela.horizontalHeaderItem(i).text() for i in range(self.tabela.columnCount())]
 
-        # Salva os dados em um arquivo Excel
+        # Salva os dados em um arquivo Excel usando a função do backend
         try:
-            import pandas as pd
-            df = pd.DataFrame(dados, columns=colunas)
-            df.to_excel(caminho, index=False)
+            from src.backend.Resultados import salvar_em_excel
+            salvar_em_excel([dict(zip(colunas, linha)) for linha in dados], caminho)
             QMessageBox.information(self, "Sucesso", "Os dados foram salvos com sucesso em Excel.")
         except Exception as e:
             QMessageBox.critical(self, "Erro", f"Erro ao salvar em Excel: {e}")
@@ -338,6 +340,6 @@ class ResultadosTela(QWidget):
             self.usuario_todos.setText("Todos os Usuários")
 
     def atualizar_tabela(self):
-        """Atualiza a tabela com os resultados mais recentes."""
+        """Recarrega os resultados do backend e os exibe na tabela."""
         self.resultados = carregar_resultados()  # Recarrega resultados do backend
-        self.carregar_tabela(self.resultados)   # Recarrega na tabela
+        self.carregar_tabela(self.resultados)   # Atualiza a tabela com os novos dados

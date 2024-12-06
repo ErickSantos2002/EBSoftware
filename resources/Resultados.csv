@@ -1,70 +1,17 @@
 ID do teste,ID do usuário,Nome,Matrícula,Setor,Data e hora,Quantidade de Álcool,Status
-1,0,Automático,Automático,Automático,2024-11-25 09:44:44,0.000,Aprovado
-2,0,Automático,Automático,Automático,2024-11-26 09:44:52,0.000,Aprovado
-3,0,Automático,Automático,Automático,2024-11-27 09:45:03,1.321,Rejeitado
-4,0,Automático,Automático,Automático,2024-11-28 09:45:11,0.000,Aprovado
-5,0,Automático,Automático,Automático,2024-11-29 09:45:23,1.110,Rejeitado
-6,0,Automático,Automático,Automático,2024-11-29 09:45:29,0.000,Aprovado
-7,0,Automático,Automático,Automático,2024-11-29 09:45:38,1.010,Rejeitado
-8,0,Automático,Automático,Automático,2024-11-29 09:45:45,0.200,Aprovado
-9,0,Automático,Automático,Automático,2024-11-29 09:46:06,0.351,Aprovado
-10,0,Automático,Automático,Automático,2024-11-29 09:46:57,0.954,Rejeitado
-11,0,Automático,Automático,Automático,2024-11-29 09:47:28,0.000,Aprovado
-12,0,Automático,Automático,Automático,2024-11-29 09:47:45,0.000,Aprovado
-13,12,Usuário 1,MAT0001,Setor 2,2024-11-29 11:19:56,0.000,Aprovado
-14,13,Usuário 2,MAT0002,Setor 3,2024-11-29 11:22:31,0.000,Aprovado
-15,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:23:31,0.000,Aprovado
-16,12,Usuário 1,MAT0001,Setor 2,2024-11-29 11:28:51,0.000,Aprovado
-17,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:29:45,0.000,Aprovado
-18,16,Usuário 5,MAT0005,Setor 1,2024-11-29 11:34:26,0.000,Aprovado
-19,13,Usuário 2,MAT0002,Setor 3,2024-11-29 11:51:42,0.000,Aprovado
-20,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:59:21,0.000,Aprovado
-16,12,Usuário 1,MAT0001,Setor 2,2024-11-29 11:28:51,0.000,Aprovado
-17,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:29:45,0.000,Aprovado
-18,16,Usuário 5,MAT0005,Setor 1,2024-11-29 11:34:26,0.000,Aprovado
-19,13,Usuário 2,MAT0002,Setor 3,2024-11-29 11:51:42,0.000,Aprovado
-20,14,Usuário 3,MAT0003,Setor 4,2024-11-29 11:59:21,0.000,Aprovado
-21,1,Erick Silva,1001,TI,2024-12-04 15:38:27,0.000,Aprovado
-21,0,Automático,Automático,Automático,2024-12-04 15:38:44,0.000,Aprovado
-22,1,Erick Silva,1001,TI,2024-12-04 15:40:34,0.000,Aprovado
-23,0,Automático,Automático,Automático,2024-12-04 15:40:43,0.000,Aprovado
-24,0,Automático,Automático,Automático,2024-12-04 15:40:43,0.000,Aprovado
-25,0,Automático,Automático,Automático,2024-12-04 15:40:43,0.000,Aprovado
-26,0,Automático,Automático,Automático,2024-12-04 15:54:18,0.000,Aprovado
-27,1,Erick Silva,1001,TI,2024-12-04 15:54:37,0.000,Aprovado
-28,1,Erick Silva,1001,TI,2024-12-04 16:01:55,0.000,Aprovado
-29,1,Erick Silva,1001,TI,2024-12-04 16:02:28,0.000,Aprovado
-30,1,Erick Silva,1001,TI,2024-12-04 16:04:55,0.000,Aprovado
-31,1,Erick Silva,1001,TI,2024-12-04 16:06:29,0.000,Aprovado
-32,1,Erick Silva,1001,TI,2024-12-04 16:14:41,0.000,Aprovado
-33,0,Automático,Automático,Automático,2024-12-04 16:16:17,0.000,Aprovado
-34,0,Automático,Automático,Automático,2024-12-04 16:16:23,0.000,Aprovado
-35,1,Erick Silva,1001,TI,2024-12-04 16:16:38,0.000,Aprovado
-36,1,Erick Silva,1001,TI,2024-12-04 16:20:51,0.000,Aprovado
-37,1,Erick Silva,1001,TI,2024-12-05 10:13:27,0.000,Aprovado
-38,0,Automático,Automático,Automático,2024-12-05 10:14:11,0.000,Aprovado
-39,1,Erick Silva,1001,TI,2024-12-05 10:20:11,0.000,Aprovado
-40,1,Erick Silva,1001,TI,2024-12-05 10:57:23,0.000,Aprovado
-41,1,Erick Silva,1001,TI,2024-12-05 10:58:07,0.000,Aprovado
-42,1,Erick Silva,1001,TI,2024-12-05 11:32:15,0.000,Aprovado
-43,3,Paulo Lima,1003,Financeiro,2024-12-05 11:40:09,0.000,Aprovado
-44,3,Paulo Lima,1003,Financeiro,2024-12-05 11:41:59,0.120,Rejeitado
-45,4,Ana Oliveira,1004,Recursos Humanos,2024-12-05 11:55:13,0.000,Aprovado
-46,4,Ana Oliveira,1004,Recursos Humanos,2024-12-05 11:55:32,0.075,Rejeitado
-47,4,Ana Oliveira,1004,Recursos Humanos,2024-12-05 11:55:56,0.000,Aprovado
-48,0,Automático,Automático,Automático,2024-12-05 11:56:24,0.000,Aprovado
-49,5,João Pedro,1005,Marketing,2024-12-05 12:13:25,0.000,Aprovado
-50,0,Automático,Automático,Automático,2024-12-05 12:13:38,0.000,Aprovado
-51,0,Automático,Automático,Automático,2024-12-05 12:14:35,0.000,Aprovado
-52,0,Automático,Automático,Automático,2024-12-05 12:17:30,1.060,Rejeitado
-53,0,Automático,Automático,Automático,2024-12-05 12:19:01,0.000,Aprovado
-54,0,Automático,Automático,Automático,2024-12-05 12:19:19,0.000,Aprovado
-55,58,Djalma Neto,058,RH,2024-12-05 12:20:07,0.000,Aprovado
-56,8,Juliana Mendes,1008,Produção,2024-12-05 16:11:45,0.000,Aprovado
-57,8,Juliana Mendes,1008,Produção,2024-12-05 16:13:40,0.000,Aprovado
 58,8,Juliana Mendes,1008,Produção,05/12/2024 16:15:04,0.000,Aprovado
 59,8,Juliana Mendes,1008,Produção,05/12/2024 16:27:48,0.000,Aprovado
 60,8,Juliana Mendes,1008,Produção,05/12/2024 16:29:13,0.000,Aprovado
 61,8,Juliana Mendes,1008,Produção,05/12/2024 16:32:36,0.000,Aprovado
 62,9,Fernando Costa,1009,Pesquisa e Desenvolvimento,05/12/2024 16:32:51,0.000,Aprovado
 63,0,Automático,Automático,Automático,05/12/2024 16:32:58,0.000,Aprovado
+64,7,Carlos Eduardo,1007,Vendas,06/12/2024 08:39:38,0.000,Aprovado
+65,0,Automático,Automático,Automático,06/12/2024 08:39:54,0.000,Aprovado
+66,0,Automático,Automático,Automático,06/12/2024 08:42:39,0.000,Aprovado
+67,0,Automático,Automático,Automático,06/12/2024 08:47:29,0.000,Aprovado
+68,0,Automático,Automático,Automático,06/12/2024 08:47:49,0.000,Aprovado
+69,9,Fernando Costa,1009,Pesquisa e Desenvolvimento,06/12/2024 08:48:06,0.000,Aprovado
+70,0,Automático,Automático,Automático,06/12/2024 08:51:36,0.000,Aprovado
+71,0,Automático,Automático,Automático,06/12/2024 08:51:41,0.000,Aprovado
+72,0,Automático,Automático,Automático,06/12/2024 08:54:02,0.000,Aprovado
+73,58,Djalma Neto,058,RH,06/12/2024 08:55:03,0.000,Aprovado

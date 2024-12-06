@@ -48,15 +48,20 @@ def filtrar_resultados(resultados, periodo=None, usuario=None, status=None):
 def salvar_em_excel(resultados, caminho_arquivo):
     """Salva os resultados em um arquivo Excel."""
     df = pd.DataFrame(resultados)
+
+    # Formata a coluna de Data e Hora, se existir
+    if "Data e hora" in df.columns:
+        df["Data e hora"] = pd.to_datetime(df["Data e hora"]).dt.strftime("%d/%m/%y %H:%M:%S")
+
     with pd.ExcelWriter(caminho_arquivo, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Resultados")
         worksheet = writer.sheets["Resultados"]
 
         # Ajusta a largura das colunas no Excel
-        for column_cells in worksheet.columns:
-            max_length = max(len(str(cell.value)) for cell in column_cells if cell.value) + 2
-            column = column_cells[0].column_letter
-            worksheet.column_dimensions[column].width = max_length
+        for col_idx, column_cells in enumerate(worksheet.iter_cols()):
+            max_length = max(len(str(cell.value)) for cell in column_cells if cell.value)
+            col_letter = worksheet.cell(row=1, column=col_idx + 1).column_letter
+            worksheet.column_dimensions[col_letter].width = max_length + 2
 
 def salvar_em_pdf(resultados, caminho_arquivo):
     """Salva os resultados em um arquivo PDF."""

@@ -5,6 +5,7 @@ import serial
 import configparser
 from threading import Thread
 from datetime import datetime
+from PyQt5.QtCore import QObject, pyqtSignal
 
 executando_automatico = False
 executando_manual = False
@@ -17,6 +18,11 @@ RESOURCES_DIR = os.path.join(PROJECT_DIR, "resources")  # Caminho do diretório 
 # Caminhos dos arquivos específicos
 ARQUIVO_RESULTADOS = os.path.join(RESOURCES_DIR, "Resultados.csv")
 CONFIG_FILE = os.path.join(RESOURCES_DIR, "config.ini")
+
+class SignalManager(QObject):
+    resultado_atualizado = pyqtSignal()
+
+sinal_global = SignalManager()  # Instância global do gerenciador de sinais
 
 # Função para verificar a existência dos arquivos e criar caso necessário
 def inicializar_arquivos():
@@ -145,6 +151,9 @@ def salvar_resultado(id_teste, id_usuario, nome, matricula, setor, data_hora, re
             "Status": status
         })
 
+    # Emite o sinal para notificar que o CSV foi atualizado
+    sinal_global.resultado_atualizado.emit()
+
 def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callback=None):
     """Executa um teste (manual ou automático) em uma thread separada."""
     def executar():
@@ -159,16 +168,17 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
         try:
             while (executando_automatico if automatico else executando_manual):
                 enviar_comando("$START")  # Envia o comando para iniciar o teste
+                print(f"Comando $START enviado para {'teste automático' if automatico else 'teste manual'}.")
+
                 while (executando_automatico if automatico else executando_manual):
                     resposta = ler_resposta()  # Lê a resposta da porta serial
 
                     if resposta and resposta.startswith("$RESULT"):
                         # Extrai informações do resultado
                         id_teste = proximo_id_teste()
-                        data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # Ajuste aqui!
+                        data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
                         resultado = resposta.split(",")[1]  # Exemplo: "0.000-OK"
                         quantidade, status = resultado.split("-")
-                        status = "Aprovado" if status == "OK" else "Rejeitado"
 
                         # Salva o resultado no arquivo
                         salvar_resultado(
@@ -177,22 +187,37 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
                             nome if not automatico else "Automático",
                             matricula if not automatico else "Automático",
                             setor if not automatico else "Automático",
-                            data_hora,  # Já no formato correto
+                            data_hora,
                             resultado,
                         )
-                        print(f"Teste {'automático' if automatico else 'manual'} realizado com sucesso: {resultado}")
+                        print(f"Teste {'automático' if automatico else 'manual'} realizado: {resultado}")
 
-                        # Notifica o callback (se fornecido)
-                        if callback:
-                            callback(resultado)
+                        # Teste Automático: verifica HIGH
+                        if automatico and status == "HIGH":
+                            print("Resultado HIGH encontrado. Parando testes automáticos.")
+                            enviar_comando("$RESET")  # Reseta o dispositivo
+                            executando_automatico = False
+                            if callback:
+                                callback(resultado)  # Notifica o frontend
+                            return resultado
 
-                        # Retorna o resultado para o frontend
-                        return resultado
+                        # Teste Automático: continua com próximos testes
+                        if automatico and status == "OK":
+                            print("Resultado OK encontrado. Continuando testes automáticos.")
+                            break  # Sai do laço interno para reenviar $START
+
+                        # Teste Manual: notifica o resultado e para
+                        if not automatico:
+                            if callback:
+                                callback(resultado)  # Notifica o frontend
+                            enviar_comando("$RESET")  # Reseta o dispositivo
+                            executando_manual = False
+                            return resultado
 
                     elif resposta:  # Log de respostas intermediárias
                         print(f"Aguardando resultado: {resposta}")
 
-                # Pequeno delay entre testes automáticos para evitar congestionamento
+                # Delay entre testes automáticos
                 if automatico:
                     time.sleep(1)
 
@@ -201,10 +226,8 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
             raise
         finally:
             enviar_comando("$RESET")  # Garante que o dispositivo é resetado
-            if automatico:
-                executando_automatico = False
-            else:
-                executando_manual = False
+            executando_automatico = False
+            executando_manual = False
             print(f"Teste {'automático' if automatico else 'manual'} interrompido.")
 
     # Inicia o teste em uma thread separada

@@ -188,16 +188,12 @@ class TestesTela(QWidget):
         """Inicia testes automáticos e para ao encontrar um resultado reprovado (HIGH)."""
         def callback(resultado):
             # Processa o resultado recebido do backend
-            quantidade, status = resultado.split("-")  # Divide o resultado em quantidade e status
-
+            quantidade, status = resultado.split("-")
             if status == "HIGH":
-                # Mostra a mensagem para resultados reprovados e para os testes automáticos
+                # Notifica o frontend sobre o resultado HIGH
                 self.resultado_recebido.emit(resultado)
-                try:
-                    from src.backend.Testes import parar_testes
-                    parar_testes()  # Envia comando para parar o teste
-                except Exception as e:
-                    QMessageBox.critical(self, "Erro", f"Erro ao parar os testes automáticos: {e}")
+                QMessageBox.warning(self, "Teste Automático", 
+                    f"Teste reprovado. Quantidade de álcool: {quantidade}.\nTestes automáticos interrompidos.")
 
         # Inicia os testes automáticos no backend
         try:
