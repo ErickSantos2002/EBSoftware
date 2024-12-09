@@ -5,12 +5,13 @@ import sys
 
 if getattr(sys, 'frozen', False):
     # Diretório do executável (PyInstaller)
-    BASE_DIR = sys._MEIPASS
+    BASE_DIR = os.path.join(sys._MEIPASS)
 else:
-    # Diretório raiz do projeto (quando executado como script)
+    # Diretório base para execução no modo script
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
-RESOURCES_DIR = os.path.join(PROJECT_DIR, "resources")
+
+# Diretório resources no local correto
+RESOURCES_DIR = os.path.join(BASE_DIR, "resources")
 CONFIG_FILE = os.path.join(RESOURCES_DIR, "config.ini")
 INFO_FILE = os.path.join(RESOURCES_DIR, "info.ini")
 

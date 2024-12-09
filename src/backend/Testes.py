@@ -13,15 +13,20 @@ executando_manual = False
 
 if getattr(sys, 'frozen', False):
     # Diretório do executável (PyInstaller)
-    BASE_DIR = sys._MEIPASS
+    BASE_DIR = os.path.join(sys._MEIPASS)
 else:
-    # Diretório raiz do projeto (quando executado como script)
+    # Diretório base para execução no modo script
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RESOURCES_DIR = os.path.join(BASE_DIR, "resources")  # Caminho do diretório resources
+
+# Diretório resources no local correto
+RESOURCES_DIR = os.path.join(BASE_DIR, "resources")
 
 # Caminhos dos arquivos específicos
 ARQUIVO_RESULTADOS = os.path.join(RESOURCES_DIR, "Resultados.csv")
 CONFIG_FILE = os.path.join(RESOURCES_DIR, "config.ini")
+
+print("Diretorio base: " + BASE_DIR)
+print("Diretorios resources: " + RESOURCES_DIR)
 
 class SignalManager(QObject):
     resultado_atualizado = pyqtSignal()

@@ -2,6 +2,14 @@ import os
 import csv
 import pandas as pd
 import sys
+from PyQt5.QtCore import QObject, pyqtSignal
+
+# Gerenciador de sinais
+class SignalManager(QObject):
+    registros_atualizados = pyqtSignal()
+
+# Instância global
+sinal_global = SignalManager()
 
 if getattr(sys, 'frozen', False):
     # Diretório do executável (PyInstaller)
@@ -107,6 +115,9 @@ def adicionar_registro(nome, matricula, setor):
 
     registros.append(novo_registro)
     salvar_registros(registros)
+
+    # Emite o sinal informando que os registros foram atualizados
+    sinal_global.registros_atualizados.emit()
 
     return novo_registro
 

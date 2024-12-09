@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QMessageBox, QHeaderView, QLineEdit, QFrame
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QObject
-from src.backend.Registros import carregar_registros
+from src.backend.Registros import carregar_registros, sinal_global
 from src.backend.Testes import (
     iniciar_teste_manual, parar_testes,
     iniciar_teste_automatico, parar_testes, executar_teste
@@ -12,8 +12,12 @@ from threading import Thread
 
 class TestesTela(QWidget):
     resultado_recebido = pyqtSignal(str)  # Sinal para transmitir resultados do backend
+    erro_recebido = pyqtSignal(str)  # Novo sinal para erros
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        sinal_global.registros_atualizados.connect(self.carregar_registros)
+        self.erro_recebido.connect(self.mostrar_erro)  # Conecte o novo sinal
 
         # Criação do frame principal com fundo branco
         self.frame = QFrame(self)
@@ -174,7 +178,9 @@ class TestesTela(QWidget):
         setor = self.tabela.item(linha, 3).text()
 
         def callback(resultado):
-            # Emite o sinal quando o backend retornar o resultado
+            if resultado.startswith("ERRO"):
+                self.erro_recebido.emit(f"Ocorreu um erro: {resultado.split('-', 1)[1]}")
+                return
             self.resultado_recebido.emit(resultado)
 
         # Executa o teste no backend
@@ -187,13 +193,25 @@ class TestesTela(QWidget):
     def iniciar_teste_automatico(self):
         """Inicia testes automáticos e para ao encontrar um resultado reprovado (HIGH)."""
         def callback(resultado):
-            # Processa o resultado recebido do backend
+            # Verifica se o resultado contém um erro
+            if resultado.startswith("ERRO"):
+                QMessageBox.critical(self, "Erro no Teste", f"Ocorreu um erro durante o teste automático: {resultado}")
+                return
+
             quantidade, status = resultado.split("-")
             if status == "HIGH":
-                # Notifica o frontend sobre o resultado HIGH
                 self.resultado_recebido.emit(resultado)
-                QMessageBox.warning(self, "Teste Automático", 
-                    f"Teste reprovado. Quantidade de álcool: {quantidade}.\nTestes automáticos interrompidos.")
+                QMessageBox.warning(
+                    self, "Teste Automático", 
+                    f"Teste reprovado. Quantidade de álcool: {quantidade}.\nTestes automáticos interrompidos."
+                )
+
+        # Inicia os testes automáticos no backend
+        try:
+            from src.backend.Testes import executar_teste
+            executar_teste(None, None, None, None, automatico=True, callback=callback)
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", f"Erro ao iniciar os testes automáticos: {e}")
 
         # Inicia os testes automáticos no backend
         try:
@@ -228,3 +246,6 @@ class TestesTela(QWidget):
             QMessageBox.information(self, "Parado", "Testes interrompidos com sucesso.")
         except Exception as e:
             QMessageBox.critical(self, "Erro", f"Erro ao interromper os testes: {e}")
+    
+    def mostrar_erro(self, mensagem):
+        QMessageBox.critical(self, "Erro", mensagem)
