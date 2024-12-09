@@ -7,13 +7,12 @@ from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 
 if getattr(sys, 'frozen', False):
-    # Diretório do executável (quando empacotado com PyInstaller)
-    BASE_DIR = os.path.dirname(sys.executable)
+    # Diretório do executável (PyInstaller)
+    BASE_DIR = sys._MEIPASS
 else:
     # Diretório raiz do projeto (quando executado como script)
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))  # Sai de src/backend
-RESOURCES_DIR = os.path.join(PROJECT_DIR, "resources")  # Caminho do diretório resources
+RESOURCES_DIR = os.path.join(BASE_DIR, "resources")  # Caminho do diretório resources
 
 # Caminho do arquivo específico
 ARQUIVO_RESULTADOS = os.path.join(RESOURCES_DIR, "Resultados.csv")

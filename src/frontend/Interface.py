@@ -7,8 +7,8 @@ from PyQt5.QtGui import QIcon, QFont, QColor
 from PyQt5.QtCore import Qt, QSize, QPropertyAnimation
 
 if getattr(sys, 'frozen', False):
-    # Diretório do executável (quando empacotado com PyInstaller)
-    BASE_DIR = os.path.dirname(sys.executable)
+    # Diretório do executável (PyInstaller)
+    BASE_DIR = sys._MEIPASS
 else:
     # Diretório raiz do projeto (quando executado como script)
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -90,13 +90,13 @@ class MainWindow(QMainWindow):
         layout.addWidget(top_bar)
 
     def add_buttons_with_icons(self, layout):
-        """Adiciona os botões com ícones e textos abaixo na barra superior, com hover para o texto."""
+        """Adiciona os botões com ícones e textos abaixo na barra superior."""
         ICONES = {
-            "Registros": os.path.join("assets", "Registros.png"),
-            "Testes": os.path.join("assets", "Testes.png"),
-            "Resultados": os.path.join("assets", "Resultados.png"),
-            "Configurações": os.path.join("assets", "Configuracoes.png"),
-            "Informações": os.path.join("assets", "Informacoes.png"),
+            "Registros": os.path.join(BASE_DIR, "assets", "Registros.png"),
+            "Testes": os.path.join(BASE_DIR, "assets", "Testes.png"),
+            "Resultados": os.path.join(BASE_DIR, "assets", "Resultados.png"),
+            "Configurações": os.path.join(BASE_DIR, "assets", "Configuracoes.png"),
+            "Informações": os.path.join(BASE_DIR, "assets", "Informacoes.png"),
         }
 
         for nome, icone in ICONES.items():
@@ -131,6 +131,33 @@ class MainWindow(QMainWindow):
                 color: black;  /* Preto padrão */
                 background: transparent;  /* Sem fundo */
             """)
+
+            def criar_eventos_hover(botao, rotulo):
+                def on_enter(event):
+                    botao.setIconSize(QSize(40, 40))  # Ícone maior
+                    rotulo.setStyleSheet(f"""
+                        font-family: ArialBlack;
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: black;
+                        background: transparent;
+                    """)
+
+                def on_leave(event):
+                    botao.setIconSize(QSize(35, 35))  # Ícone normal
+                    rotulo.setStyleSheet(f"""
+                        font-family: ArialBlack;
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: black;
+                        background: transparent;
+                    """)
+
+                botao.enterEvent = on_enter
+                botao.leaveEvent = on_leave
+
+            # Adiciona eventos de hover
+            criar_eventos_hover(botao, rotulo)
 
             # Adiciona o botão e o rótulo ao layout vertical
             botao_layout.addWidget(botao, alignment=Qt.AlignCenter)

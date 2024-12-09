@@ -11,8 +11,8 @@ from src.backend.Registros import (carregar_registros, adicionar_registro,
 )
 
 if getattr(sys, 'frozen', False):
-    # Diretório do executável (quando empacotado com PyInstaller)
-    BASE_DIR = os.path.dirname(sys.executable)
+    # Diretório do executável (PyInstaller)
+    BASE_DIR = sys._MEIPASS
 else:
     # Diretório raiz do projeto (quando executado como script)
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
