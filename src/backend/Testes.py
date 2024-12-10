@@ -168,28 +168,47 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
     def executar():
         global executando_automatico, executando_manual
 
-        # Define o estado do teste
         if automatico:
             executando_automatico = True
         else:
             executando_manual = True
 
+        respostas_vazias = 0  # Contador para respostas vazias
+        max_respostas_vazias = 10  # Limite de respostas vazias antes de falhar
+
         try:
             while (executando_automatico if automatico else executando_manual):
-                enviar_comando("$START")  # Envia o comando para iniciar o teste
-                print(f"Comando $START enviado para {'teste automático' if automatico else 'teste manual'}.")
+                try:
+                    enviar_comando("$START")
+                    print(f"Comando $START enviado para {'teste automático' if automatico else 'teste manual'}.")
+                except Exception as e:
+                    if callback:
+                        callback(f"ERRO-Falha ao enviar comando $START: {e}")
+                    return
 
                 while (executando_automatico if automatico else executando_manual):
-                    resposta = ler_resposta()  # Lê a resposta da porta serial
+                    try:
+                        resposta = ler_resposta()
+                        if not resposta:  # Incrementa o contador para respostas vazias
+                            respostas_vazias += 1
+                            if respostas_vazias >= max_respostas_vazias:
+                                if callback:
+                                    callback("ERRO-Não foi possível conectar ao dispositivo (respostas vazias).")
+                                return
+                            continue  # Continua aguardando respostas
 
-                    if resposta and resposta.startswith("$RESULT"):
-                        # Extrai informações do resultado
+                        respostas_vazias = 0  # Reseta o contador ao receber uma resposta válida
+                    except Exception as e:
+                        if callback:
+                            callback(f"ERRO-Falha ao ler resposta: {e}")
+                        return
+
+                    if resposta.startswith("$RESULT"):
                         id_teste = proximo_id_teste()
                         data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                        resultado = resposta.split(",")[1]  # Exemplo: "0.000-OK"
+                        resultado = resposta.split(",")[1]
                         quantidade, status = resultado.split("-")
 
-                        # Salva o resultado no arquivo
                         salvar_resultado(
                             id_teste,
                             id_usuario if not automatico else 0,
@@ -201,45 +220,40 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
                         )
                         print(f"Teste {'automático' if automatico else 'manual'} realizado: {resultado}")
 
-                        # Teste Automático: verifica HIGH
                         if automatico and status == "HIGH":
                             print("Resultado HIGH encontrado. Parando testes automáticos.")
-                            enviar_comando("$RESET")  # Reseta o dispositivo
+                            enviar_comando("$RESET")
                             executando_automatico = False
                             if callback:
-                                callback(resultado)  # Notifica o frontend
-                            return resultado
+                                callback(resultado)
+                            return
 
-                        # Teste Automático: continua com próximos testes
                         if automatico and status == "OK":
-                            print("Resultado OK encontrado. Continuando testes automáticos.")
-                            break  # Sai do laço interno para reenviar $START
+                            break
 
-                        # Teste Manual: notifica o resultado e para
                         if not automatico:
                             if callback:
-                                callback(resultado)  # Notifica o frontend
-                            enviar_comando("$RESET")  # Reseta o dispositivo
+                                callback(resultado)
+                            enviar_comando("$RESET")
                             executando_manual = False
-                            return resultado
+                            return
 
-                    elif resposta:  # Log de respostas intermediárias
-                        print(f"Aguardando resultado: {resposta}")
-
-                # Delay entre testes automáticos
                 if automatico:
                     time.sleep(1)
 
         except Exception as e:
             print(f"Erro durante o teste {'automático' if automatico else 'manual'}: {e}")
-            raise
+            if callback:
+                callback(f"ERRO-{str(e)}")
         finally:
-            enviar_comando("$RESET")  # Garante que o dispositivo é resetado
+            try:
+                enviar_comando("$RESET")
+            except Exception as e:
+                print(f"Erro ao enviar comando $RESET: {e}")
             executando_automatico = False
             executando_manual = False
             print(f"Teste {'automático' if automatico else 'manual'} interrompido.")
 
-    # Inicia o teste em uma thread separada
     thread = Thread(target=executar, daemon=True)
     thread.start()
     print(f"Teste {'automático' if automatico else 'manual'} iniciado em thread separada.")

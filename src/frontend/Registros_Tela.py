@@ -386,8 +386,6 @@ class RegistrosTela(QWidget):
             except Exception as e:
                 QMessageBox.critical(self, "Erro", f"Erro ao importar registros: {e}")
 
-
-
     def exportar_cadastro(self):
         """Exporta os registros atuais para um arquivo Excel."""
         options = QFileDialog.Options()

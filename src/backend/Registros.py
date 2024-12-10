@@ -133,6 +133,9 @@ def apagar_registros(ids_para_apagar):
     print(f"Registros restantes após exclusão: {registros_filtrados}")
     salvar_registros(registros_filtrados)
 
+    # Emite o sinal informando que os registros foram atualizados
+    sinal_global.registros_atualizados.emit()  # Adicionado
+
     return registros_filtrados
 
 def gerar_arquivo_erros(erros, file_path):
