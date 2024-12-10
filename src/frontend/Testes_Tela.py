@@ -324,7 +324,7 @@ class TestesTela(QWidget):
             if status == "HIGH":
                 # Resultado reprovado com HIGH
                 QMessageBox.warning(
-                    self, "Teste Automático",
+                    self, "Resultado do Teste",
                     f"Teste reprovado, Quantidade do álcool: {quantidade}\n"
                     f"Recomenda-se aguardar 5 minutos antes de iniciar um novo teste."
                 )

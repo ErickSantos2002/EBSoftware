@@ -206,8 +206,20 @@ class ResultadosTela(QWidget):
         for resultado in self.resultados:
             # Filtra por período
             if periodo:
-                data_teste = QDate.fromString(resultado["Data e hora"].split()[0], "yyyy-MM-dd").toPyDate()
-                if not (periodo[0] <= data_teste <= periodo[1]):
+                try:
+                    # Extrai e converte a data com validação
+                    data_teste_str = resultado["Data e hora"].split()[0]
+                    data_teste = QDate.fromString(data_teste_str, "dd/MM/yyyy")  # Formato ajustado para PyQt5
+                    if not data_teste.isValid():
+                        print(f"Data inválida ignorada: {data_teste_str}")
+                        continue  # Ignora entradas com datas inválidas
+
+                    # Converte para tipo Python para comparação
+                    data_teste = data_teste.toPyDate()
+                    if not (periodo[0] <= data_teste <= periodo[1]):
+                        continue
+                except Exception as e:
+                    print(f"Erro ao processar data: {resultado['Data e hora']} - {e}")
                     continue
 
             # Filtra por status

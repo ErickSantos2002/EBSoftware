@@ -33,7 +33,7 @@ def filtrar_resultados(resultados, periodo=None, usuario=None, status=None):
     for resultado in resultados:
         # Filtro por período
         if periodo:
-            data_teste = datetime.strptime(resultado["Data e hora"], "%Y-%m-%d %H:%M:%S").date()
+            data_teste = datetime.strptime(resultado["Data e hora"], "%Y/%m/%d %H:%M:%S").date()
             if not (periodo[0] <= data_teste <= periodo[1]):
                 continue
 
