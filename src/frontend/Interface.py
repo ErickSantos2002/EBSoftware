@@ -92,7 +92,7 @@ class MainWindow(QMainWindow):
     def add_buttons_with_icons(self, layout):
         """Adiciona os botões com ícones e textos abaixo na barra superior."""
         ICONES = {
-            "Registros": os.path.join(BASE_DIR, "assets", "Registros.png"),
+            "Cadastros": os.path.join(BASE_DIR, "assets", "Cadastros.png"),
             "Testes": os.path.join(BASE_DIR, "assets", "Testes.png"),
             "Resultados": os.path.join(BASE_DIR, "assets", "Resultados.png"),
             "Configurações": os.path.join(BASE_DIR, "assets", "Configuracoes.png"),
@@ -177,8 +177,8 @@ class MainWindow(QMainWindow):
     def criar_conexao(self, nome):
         """Cria uma conexão para o botão com o nome especificado."""
         def on_click():
-            if nome == "Registros":
-                self.abrir_modulo("Registros_Tela")
+            if nome == "Cadastros":
+                self.abrir_modulo("Cadastros_Tela")
             elif nome == "Testes":
                 self.abrir_modulo("Testes_Tela")
             elif nome == "Resultados":
@@ -197,9 +197,9 @@ class MainWindow(QMainWindow):
             self.main_area.setLayout(self.stacked_layout)
             
             # Adiciona os módulos ao layout empilhado
-            from src.frontend.Registros_Tela import RegistrosTela
-            self.tela_registros = RegistrosTela(self)
-            self.stacked_layout.addWidget(self.tela_registros)
+            from frontend.Cadastros_Tela import CadastrosTela
+            self.tela_cadastros = CadastrosTela(self)
+            self.stacked_layout.addWidget(self.tela_cadastros)
 
             from src.frontend.Testes_Tela import TestesTela
             self.tela_testes = TestesTela(self)
@@ -218,8 +218,8 @@ class MainWindow(QMainWindow):
             self.stacked_layout.addWidget(self.tela_informacoes)
 
         # Alterna para o módulo apropriado
-        if modulo == "Registros_Tela":
-            self.stacked_layout.setCurrentWidget(self.tela_registros)
+        if modulo == "Cadastros_Tela":
+            self.stacked_layout.setCurrentWidget(self.tela_cadastros)
         elif modulo == "Testes_Tela":
             self.stacked_layout.setCurrentWidget(self.tela_testes)
         elif modulo == "Resultados_Tela":
@@ -231,9 +231,9 @@ class MainWindow(QMainWindow):
         else:
             print(f"Módulo {modulo} não encontrado.")
 
-    def carregar_registros(self, layout):
-        """Carrega a tela de Registros_Tela na área principal."""
-        from src.frontend.Registros_Tela import RegistrosTela  # Importa o widget da tela de registros
+    def carregar_cadastros(self, layout):
+        """Carrega a tela de Cadastros_Tela na área principal."""
+        from frontend.Cadastros_Tela import CadastrosTela # Importa o widget da tela de cadastros
         
         # Limpa widgets anteriores da área principal
         for i in reversed(range(layout.count())):
@@ -241,9 +241,9 @@ class MainWindow(QMainWindow):
             if widget is not None:
                 widget.setParent(None)
 
-        # Adiciona a tela de registros à área principal
-        registros_tela = RegistrosTela(parent=self)
-        layout.addWidget(registros_tela)
+        # Adiciona a tela de cadastros à área principal
+        cadastros_tela = CadastrosTela(parent=self)
+        layout.addWidget(cadastros_tela)
 
     def carregar_testes(self, layout):
         """Carrega o módulo de Testes na área principal."""

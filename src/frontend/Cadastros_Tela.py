@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QLineEdit, QFormLayout, QMessageBox, QHeaderView, QFrame, QFileDialog, QMessageBox
 )
 from PyQt5.QtCore import Qt
-from src.backend.Registros import (carregar_registros, adicionar_registro, 
+from backend.Cadastros import (carregar_registros, adicionar_registro, 
     apagar_registros, importar_excel, exportar_modelo, exportar_modelo, gerar_arquivo_erros
 )
 
@@ -40,7 +40,7 @@ class CustomTableWidgetItem(QTableWidgetItem):
             # Se a conversão falhar, usa a comparação padrão (strings)
             return super().__lt__(other)
 
-class RegistrosTela(QWidget):
+class CadastrosTela(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -72,7 +72,7 @@ class RegistrosTela(QWidget):
         left_panel = QVBoxLayout()
 
         # Título
-        titulo = QLabel("Lista de Registros")
+        titulo = QLabel("Tabela de Cadastros")
         titulo.setAlignment(Qt.AlignCenter)
         titulo.setStyleSheet("font-family: Arial Black; font-size: 20px; background-color: #f0f0f0; margin-bottom: 10px;")
         left_panel.addWidget(titulo)
@@ -126,7 +126,7 @@ class RegistrosTela(QWidget):
         right_panel = QVBoxLayout()
 
         # Título
-        titulo = QLabel("Gerenciar Registros")
+        titulo = QLabel("Gerenciar Cadastros")
         titulo.setStyleSheet("font-family: Arial Black; font-size: 20px; background-color: #f0f0f0; margin-bottom: 10px;")
         titulo.setAlignment(Qt.AlignCenter)
         right_panel.addWidget(titulo)

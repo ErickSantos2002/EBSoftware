@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QObject
 from PyQt5.QtGui import QMovie
-from src.backend.Registros import carregar_registros, sinal_global
+from backend.Cadastros import carregar_registros, sinal_global
 from src.backend.Testes import (
     iniciar_teste_manual, parar_testes,
     iniciar_teste_automatico, parar_testes, executar_teste
