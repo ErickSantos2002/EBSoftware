@@ -4,28 +4,36 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton, QFrame, QMessageBox
 )
 from PyQt5.QtCore import Qt
-
-if getattr(sys, 'frozen', False):
-    # Diretório do executável (PyInstaller)
-    BASE_DIR = sys._MEIPASS
-else:
-    # Diretório raiz do projeto (quando executado como script)
-    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-BACKEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "backend"))
-sys.path.append(BACKEND_DIR)
-
-from src.backend.Configuracoes import salvar_porta_configurada, buscar_porta_automatica, carregar_porta_configurada
 import serial.tools.list_ports
+
+# Configuração do diretório base (compatível com PyInstaller e script normal)
+BASE_DIR = getattr(sys, 'frozen', False) and sys._MEIPASS or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+# Importa funções do backend
+from src.backend.Configuracoes import salvar_porta_configurada, buscar_porta_automatica, carregar_porta_configurada
+
 
 class ConfiguracoesTela(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        # Configuração inicial da janela
         self.setWindowTitle("Configurações")
         self.setGeometry(100, 100, 400, 300)
 
+        # Criação e configuração da interface
+        self.init_ui()
+
+        # Exibe a porta configurada atualmente
+        porta_atual = carregar_porta_configurada() or "Nenhuma"
+        self.label_porta_configurada.setText(f"Porta Configurada: {porta_atual}")
+
+    def init_ui(self):
+        """Inicializa a interface gráfica."""
         # Criação do frame principal com fundo branco
         self.frame = QFrame(self)
         self.frame.setStyleSheet("background-color: white; border: none;")
+
         main_layout = QVBoxLayout(self.frame)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(10)
@@ -68,11 +76,13 @@ class ConfiguracoesTela(QWidget):
         titulo.setStyleSheet("font-size: 16px; font-weight: bold; color: black; background-color: #f0f0f0; padding: 5px;")
         main_layout.addWidget(titulo)
 
-        # ComboBox para seleção de porta
+        # ComboBox para seleção de portas disponíveis
         self.combo_portas = QComboBox()
         self.combo_portas.setStyleSheet(estilo_combobox)
         self.combo_portas.addItems([port.device for port in serial.tools.list_ports.comports()])
-        main_layout.addWidget(QLabel("Selecione a porta:").setStyleSheet(estilo_label))
+        label_portas = QLabel("Selecione a porta:")
+        label_portas.setStyleSheet(estilo_label)
+        main_layout.addWidget(label_portas)
         main_layout.addWidget(self.combo_portas)
 
         # Botão para buscar porta automática
@@ -87,25 +97,28 @@ class ConfiguracoesTela(QWidget):
         btn_salvar.clicked.connect(self.salvar_configuracao_manual)
         main_layout.addWidget(btn_salvar)
 
-        # Exibe a porta configurada atualmente
-        self.label_porta_configurada = QLabel(f"Porta Configurada: {carregar_porta_configurada() or 'Nenhuma'}")
+        # Label para exibir a porta configurada atualmente
+        self.label_porta_configurada = QLabel("Porta Configurada: Nenhuma")
         self.label_porta_configurada.setStyleSheet("font-size: 14px; font-family: Arial; color: black; background-color: #f0f0f0; padding: 5px;")
         self.label_porta_configurada.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.label_porta_configurada)
 
-        # Configura o layout principal da janela
+        # Configuração do layout principal da janela
         final_layout = QVBoxLayout(self)
         final_layout.addWidget(self.frame)
 
     def buscar_automatica(self):
         """Busca e configura automaticamente a porta Silicon Labs."""
-        porta_auto = buscar_porta_automatica()
-        if porta_auto:
-            salvar_porta_configurada(porta_auto)
-            self.label_porta_configurada.setText(f"Porta Configurada: {porta_auto}")
-            QMessageBox.information(self, "Configuração", f"Porta {porta_auto} configurada automaticamente.")
-        else:
-            QMessageBox.warning(self, "Erro", "Nenhuma porta Silicon Labs encontrada.")
+        try:
+            porta_auto = buscar_porta_automatica()
+            if porta_auto:
+                salvar_porta_configurada(porta_auto)
+                self.label_porta_configurada.setText(f"Porta Configurada: {porta_auto}")
+                QMessageBox.information(self, "Configuração", f"Porta {porta_auto} configurada automaticamente.")
+            else:
+                QMessageBox.warning(self, "Erro", "Nenhuma porta Silicon Labs encontrada.")
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", f"Erro ao buscar porta automática: {e}")
 
     def salvar_configuracao_manual(self):
         """Salva a configuração da porta selecionada manualmente."""
@@ -113,9 +126,14 @@ class ConfiguracoesTela(QWidget):
         if not porta_selecionada:
             QMessageBox.warning(self, "Erro", "Selecione uma porta para configurar.")
             return
-        salvar_porta_configurada(porta_selecionada)
-        self.label_porta_configurada.setText(f"Porta Configurada: {porta_selecionada}")
-        QMessageBox.information(self, "Configuração", f"Porta {porta_selecionada} configurada com sucesso!")
+
+        try:
+            salvar_porta_configurada(porta_selecionada)
+            self.label_porta_configurada.setText(f"Porta Configurada: {porta_selecionada}")
+            QMessageBox.information(self, "Configuração", f"Porta {porta_selecionada} configurada com sucesso!")
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", f"Erro ao salvar configuração: {e}")
+
 
 if __name__ == "__main__":
     from PyQt5.QtWidgets import QApplication
