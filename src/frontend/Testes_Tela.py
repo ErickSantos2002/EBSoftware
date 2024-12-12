@@ -3,7 +3,7 @@ import sys
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem,
-    QPushButton, QMessageBox, QHeaderView, QLineEdit, QFrame
+    QPushButton, QMessageBox, QHeaderView, QLineEdit, QFrame, QTabWidget
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QMovie
@@ -59,26 +59,59 @@ class TestesTela(QWidget):
 
     def setup_ui(self):
         """Configura o layout principal e os componentes da tela."""
-        # Frame principal
-        self.frame = QFrame(self)
-        self.frame.setStyleSheet("background-color: white; border: none;")
-        main_layout = QVBoxLayout(self.frame)
+        # Tab Widget
+        self.tabs = QTabWidget(self)
+        self.tabs.setStyleSheet("background-color: white;")
 
-        # Barra de pesquisa
-        self.init_search_bar(main_layout)
+        # Aba Teste Manual
+        self.tab_manual = QWidget()
+        self.setup_tab_manual()
 
-        # Tabela de registros
-        self.init_table(main_layout)
+        # Aba Teste Automático
+        self.tab_automatico = QWidget()
+        self.setup_tab_automatico()
 
-        # Botões de controle
-        self.init_buttons(main_layout)
-
-        # Widget para status e spinner
-        self.init_status_widget()
+        # Adiciona as abas ao QTabWidget
+        self.tabs.addTab(self.tab_manual, "Testes Manuais")
+        self.tabs.addTab(self.tab_automatico, "Testes Automáticos")
 
         # Layout principal
         layout = QVBoxLayout(self)
-        layout.addWidget(self.frame)
+        layout.addWidget(self.tabs)
+
+    def setup_tab_manual(self):
+        """Configura a aba de Testes Manuais."""
+        layout = QVBoxLayout(self.tab_manual)
+
+        # Barra de pesquisa
+        self.init_search_bar(layout)
+
+        # Tabela de registros
+        self.init_table(layout)
+
+        # Botões específicos para teste manual
+        btn_manual = self.create_button("Iniciar Teste Manual", STYLES["button_iniciar"], self.iniciar_teste_manual)
+        layout.addWidget(btn_manual, alignment=Qt.AlignCenter)
+
+        # Botão para parar testes
+        btn_parar_manual = self.create_button("Parar Testes", STYLES["button_parar"], self.parar_testes)
+        layout.addWidget(btn_parar_manual, alignment=Qt.AlignCenter)
+
+        self.tab_manual.setLayout(layout)
+
+    def setup_tab_automatico(self):
+        """Configura a aba de Testes Automáticos."""
+        layout = QVBoxLayout(self.tab_automatico)
+
+        # Botão para iniciar testes automáticos
+        btn_automatico = self.create_button("Iniciar Teste Automático", STYLES["button_iniciar"], self.iniciar_teste_automatico)
+        layout.addWidget(btn_automatico, alignment=Qt.AlignCenter)
+
+        # Botão para parar testes
+        btn_parar_automatico = self.create_button("Parar Testes", STYLES["button_parar"], self.parar_testes)
+        layout.addWidget(btn_parar_automatico, alignment=Qt.AlignCenter)
+
+        self.tab_automatico.setLayout(layout)
 
     def connect_signals(self):
         """Conecta sinais aos respectivos slots."""
@@ -109,22 +142,11 @@ class TestesTela(QWidget):
         self.tabela.setHorizontalHeaderLabels(["ID", "Nome", "Matrícula", "Setor"])
         self.tabela.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tabela.setSelectionBehavior(QTableWidget.SelectRows)
-        self.tabela.setStyleSheet(STYLES["table"])
+        self.tabela.setSelectionMode(QTableWidget.SingleSelection)  # Proibir seleção múltipla
+        self.tabela.setEditTriggers(QTableWidget.NoEditTriggers)  # Proibir edição por duplo clique
+        self.tabela.verticalHeader().setVisible(False)  # Remover o VerticalHeader
+        self.tabela.setStyleSheet(STYLES["table"])  # Aplicar estilo à tabela
         layout.addWidget(self.tabela)
-
-    def init_buttons(self, layout):
-        """Cria os botões para iniciar e parar testes."""
-        botoes_layout = QVBoxLayout()
-
-        btn_manual = self.create_button("Iniciar Teste Manual", STYLES["button_iniciar"], self.iniciar_teste_manual)
-        btn_automatico = self.create_button("Iniciar Teste Automático", STYLES["button_iniciar"], self.iniciar_teste_automatico)
-        btn_parar = self.create_button("Parar Testes", STYLES["button_parar"], self.parar_testes)
-
-        botoes_layout.addWidget(btn_manual, alignment=Qt.AlignCenter)
-        botoes_layout.addWidget(btn_automatico, alignment=Qt.AlignCenter)
-        botoes_layout.addWidget(btn_parar, alignment=Qt.AlignCenter)
-
-        layout.addLayout(botoes_layout)
 
     def init_status_widget(self):
         """Configura o widget de status e spinner."""
@@ -137,7 +159,7 @@ class TestesTela(QWidget):
         status_layout.setContentsMargins(0, 0, 0, 0)
 
         self.status_label = QLabel("Status: Pronto", self.status_widget)
-        self.status_label.setStyleSheet(STYLES["label_status"])
+        self.status_label.setStyleSheet(STYLES["button_iniciar"])
         self.status_label.setFixedSize(150, 30)
 
         self.spinner = QLabel(self.status_widget)

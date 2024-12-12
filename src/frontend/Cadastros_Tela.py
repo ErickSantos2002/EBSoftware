@@ -22,7 +22,7 @@ STYLES = {
     "button": """
         QPushButton {
             font-family: Arial; font-size: 12px; background-color: #f0f0f0;
-            border: 1px solid #cccccc; padding: 5px; margin-top: 5px;
+            border: 1px solid #cccccc; padding: 5px;  /* Alinha padding com input */
         }
         QPushButton:hover { background-color: #e0e0e0; }
         QPushButton:pressed { background-color: #d0d0d0; border-style: inset; }
@@ -75,27 +75,56 @@ class CadastrosTela(QWidget):
         titulo.setStyleSheet(STYLES["label_title"])
         left_panel.addWidget(titulo)
 
+        
         # Campo de pesquisa
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Pesquisar por Nome, Matrícula ou Setor...")
         self.search_input.setStyleSheet(STYLES["input"])
         self.search_input.returnPressed.connect(self.pesquisar_registros)
+
         search_button = QPushButton("Pesquisar")
         search_button.setStyleSheet(STYLES["button"])
+        search_button.setMinimumHeight(self.search_input.sizeHint().height())  # Ajusta a altura mínima do botão
         search_button.clicked.connect(self.pesquisar_registros)
+
         search_layout.addWidget(self.search_input)
         search_layout.addWidget(search_button)
         left_panel.addLayout(search_layout)
 
+        # Botões acima da tabela
+        top_buttons_layout = QHBoxLayout()
+        importar_btn = QPushButton("Importar Excel")
+        importar_btn.setStyleSheet(STYLES["button"])
+        importar_btn.clicked.connect(self.importar_cadastro)
+
+        exportar_btn = QPushButton("Exportar Excel")
+        exportar_btn.setStyleSheet(STYLES["button"])
+        exportar_btn.clicked.connect(self.exportar_cadastro)
+
+        modelo_btn = QPushButton("Baixar Modelo Base")
+        modelo_btn.setStyleSheet(STYLES["button"])
+        modelo_btn.clicked.connect(self.baixar_modelo_base)
+
+        top_buttons_layout.addWidget(importar_btn)
+        top_buttons_layout.addWidget(exportar_btn)
+        top_buttons_layout.addWidget(modelo_btn)
+        left_panel.addLayout(top_buttons_layout)
+
         # Tabela
         self.tabela = QTableWidget()
-        self.tabela.setColumnCount(4)
+        self.tabela.setColumnCount(4)  # Define 4 colunas
         self.tabela.setHorizontalHeaderLabels(["ID", "Nome", "Matrícula", "Setor"])
         self.tabela.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tabela.setSelectionBehavior(QTableWidget.SelectRows)
         self.tabela.setSortingEnabled(True)
         self.tabela.setStyleSheet(STYLES["table"])
+
+        # Desabilita a edição direta na tabela
+        self.tabela.setEditTriggers(QTableWidget.NoEditTriggers)
+
+        self.tabela.verticalHeader().setVisible(False)
+
         left_panel.addWidget(self.tabela)
 
         layout.addLayout(left_panel, stretch=2)
@@ -111,44 +140,40 @@ class CadastrosTela(QWidget):
         right_panel.addWidget(titulo)
 
         # Formulário
-        form_layout = QVBoxLayout()
-        form_fields = QFormLayout()
-        self.nome_input = self.create_input_field("Nome", form_fields)
-        self.matricula_input = self.create_input_field("Matrícula", form_fields)
-        self.setor_input = self.create_input_field("Setor", form_fields)
-        form_layout.addLayout(form_fields)
+        form_layout = QFormLayout()  # Use QFormLayout diretamente para o formulário
+        self.nome_input = self.create_input_field("Nome")
+        self.matricula_input = self.create_input_field("Matrícula")
+        self.setor_input = self.create_input_field("Setor")
+
+        # Adiciona os campos ao formulário
+        form_layout.addRow("Nome:", self.nome_input)
+        form_layout.addRow("Matrícula:", self.matricula_input)
+        form_layout.addRow("Setor:", self.setor_input)
+
+        # Adiciona o formulário ao painel direito
+        right_panel.addLayout(form_layout)
 
         # Botão cadastrar
         cadastrar_btn = QPushButton("Cadastrar")
         cadastrar_btn.setStyleSheet(STYLES["button"])
         cadastrar_btn.clicked.connect(self.cadastrar_usuario)
-        form_layout.addWidget(cadastrar_btn)
+        right_panel.addWidget(cadastrar_btn)
 
-        right_panel.addLayout(form_layout)
-        self.add_right_buttons(right_panel)
+        # Botão apagar cadastro
+        apagar_btn = QPushButton("Apagar Cadastro")
+        apagar_btn.setStyleSheet(STYLES["button"])
+        apagar_btn.clicked.connect(self.apagar_registro)
+        right_panel.addWidget(apagar_btn)
+
+        # Adiciona o painel direito ao layout principal
         layout.addLayout(right_panel, stretch=1)
 
-    def create_input_field(self, placeholder, layout):
-        """Cria um campo de entrada e adiciona ao layout do formulário."""
+    def create_input_field(self, placeholder):
+        """Cria e retorna um campo de entrada com um placeholder."""
         input_field = QLineEdit()
         input_field.setPlaceholderText(placeholder)
         input_field.setStyleSheet(STYLES["input"])
-        layout.addRow(f"{placeholder}:", input_field)
         return input_field
-
-    def add_right_buttons(self, layout):
-        """Cria os botões na área direita."""
-        buttons = [
-            ("Apagar Registro", self.apagar_registro),
-            ("Importar Excel", self.importar_cadastro),
-            ("Exportar Excel", self.exportar_cadastro),
-            ("Baixar Modelo Base", self.baixar_modelo_base),
-        ]
-        for text, func in buttons:
-            button = QPushButton(text)
-            button.setStyleSheet(STYLES["button"])
-            button.clicked.connect(func)
-            layout.addWidget(button)
 
     # Funções para manipular a tabela e registros
     def carregar_dados(self):

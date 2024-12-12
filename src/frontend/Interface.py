@@ -1,284 +1,176 @@
 import sys
 import os
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QWidget, 
-    QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect, QStackedLayout, QMessageBox
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedLayout, QPushButton,
+    QMessageBox, QToolButton
 )
-from PyQt5.QtGui import QIcon, QFont, QColor
-from PyQt5.QtCore import Qt, QSize, QPropertyAnimation
+from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtCore import Qt, QSize
 
+
+# Configuração do diretório base
 if getattr(sys, 'frozen', False):
-    # Diretório do executável (PyInstaller)
     BASE_DIR = sys._MEIPASS
 else:
-    # Diretório raiz do projeto (quando executado como script)
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-src_dir = os.path.join(BASE_DIR, "src")
-sys.path.append(src_dir)
+sys.path.append(os.path.join(BASE_DIR, "src"))
 
-# Cores e Estilos
-COR_CINZA = "#969595"  # Cinza
-COR_AZUL = "#0072B7"   # Azul
-COR_PRETO = "#0C0C0E"  # Preto
-COR_BRANCA = "#FFFFFF"  # Branco
-
+# Cores
+COR_AZUL = "#0072B7"
+COR_CINZA = "#969595"
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("EBS-010 Interface")
         self.setGeometry(100, 100, 1200, 800)
-
-        # Define o ícone da janela
         self.setWindowIcon(QIcon(os.path.join(BASE_DIR, "assets", "HS2.ico")))
 
-        # Configurações de estilo geral
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: white; /* Ou use COR_BRANCA */
-            }
-            QWidget#main_area {
-                background-color: #969595; /* Ou use COR_CINZA */
-            }
-        """)
+        # Inicializa o mapeamento dos módulos
+        self.mapeamento_modulos = {
+            "Cadastros": "frontend.Cadastros_Tela.CadastrosTela",
+            "Testes": "frontend.Testes_Tela.TestesTela",
+            "Resultados": "frontend.Resultados_Tela.ResultadosTela",
+            "Configurações": "frontend.Configuracoes_Tela.ConfiguracoesTela",
+            "Informações": "frontend.Informacoes_Tela.InformacoesTela",
+        }
+
+        # Inicializa os módulos carregados
+        self.modulos_carregados = {}
 
         # Layout principal
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        main_layout = QVBoxLayout(self.central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
 
         # Barra superior
         self.create_top_bar(main_layout)
 
-        # Área principal
+        # Área principal com QStackedLayout
         self.main_area = QWidget()
-        self.main_area.setObjectName("main_area")  # Identificador CSS para aplicar estilo
+        self.stacked_layout = QStackedLayout(self.main_area)
         main_layout.addWidget(self.main_area)
 
+        # Dicionário de módulos
+        self.modulos = {}
+
     def create_top_bar(self, layout):
-        """Cria a barra superior com gradiente e insere os botões e a logo."""
-        # Widget da barra superior com gradiente
+        """Cria a barra superior com botões para os módulos e adiciona a logo."""
+        self.top_bar_buttons = {}  # Dicionário para armazenar os botões e associá-los aos módulos
+
         top_bar = QWidget()
-        top_bar.setFixedHeight(80)
-        top_bar.setStyleSheet("""
-            background: qlineargradient(
-                spread:pad,
-                x1:0, y1:0, x2:1, y2:0,
-                stop:0 #0072B7, stop:1 #FFFFFF
-            );
+        top_bar.setFixedHeight(100)  # Ajusta para comportar ícones e texto
+        top_bar.setStyleSheet(f"""
+            background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,
+            stop:0 {COR_AZUL}, stop:1 white);
         """)
 
-        # Layout interno do top_bar
         top_layout = QHBoxLayout(top_bar)
         top_layout.setContentsMargins(10, 0, 10, 0)
-        top_layout.setSpacing(20)
+        top_layout.setSpacing(15)  # Espaçamento entre os botões
 
-        # Widget para os botões e a logo (sem gradiente)
-        inner_widget = QWidget()
-        inner_layout = QHBoxLayout(inner_widget)
-        inner_layout.setContentsMargins(0, 0, 0, 0)
-        inner_layout.setSpacing(20)
+        # Botões com ícone acima do texto
+        for nome in self.mapeamento_modulos.keys():
+            botao = QToolButton()
+            botao.setText(nome)
+            botao.setIcon(QIcon(os.path.join(BASE_DIR, "assets", f"{nome}.png")))
+            botao.setIconSize(QSize(40, 40))
+            botao.setStyleSheet("""
+                QToolButton {
+                    background: transparent;
+                    border: 2px solid transparent;  /* Contorno invisível por padrão */
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: black;
+                }
+                QToolButton:hover {
+                    color: white;  /* Texto branco no hover */
+                    border: 2px solid #969595;  /* Borda cinza no hover */
+                    border-radius: 8px;
+                }
+                QToolButton[selected="true"] {
+                    border: 2px solid #969595;  /* Contorno cinza para botão selecionado */
+                    border-radius: 8px;
+                    color: white;  /* Mantém o texto branco quando selecionado */
+                }
+            """)
+            botao.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)  # Coloca o texto abaixo do ícone
+            botao.clicked.connect(lambda checked, nome=nome: self.abrir_modulo(nome))
+            self.top_bar_buttons[nome] = botao  # Armazena o botão associado ao módulo
+            top_layout.addWidget(botao)
 
-        # Adiciona os botões e a logo
-        self.add_buttons_with_icons(inner_layout)
+        # Adiciona a logo no final da barra
+        logo_button = QPushButton()
+        logo_button.setIcon(QIcon(os.path.join(BASE_DIR, "assets", "Logo.png")))
+        logo_button.setIconSize(QSize(140, 80))
+        logo_button.setStyleSheet("border: none; background: transparent;")
+        logo_button.clicked.connect(self.mostrar_logo_info)  # Exemplo de função, caso necessário
+        top_layout.addWidget(logo_button, alignment=Qt.AlignRight)
 
-        # Adiciona o inner_widget ao top_layout
-        top_layout.addWidget(inner_widget)
-
-        # Adiciona a barra ao layout principal
         layout.addWidget(top_bar)
 
-    def add_buttons_with_icons(self, layout):
-        """Adiciona os botões com ícones e textos abaixo na barra superior."""
-        ICONES = {
-            "Cadastros": os.path.join(BASE_DIR, "assets", "Cadastros.png"),
-            "Testes": os.path.join(BASE_DIR, "assets", "Testes.png"),
-            "Resultados": os.path.join(BASE_DIR, "assets", "Resultados.png"),
-            "Configurações": os.path.join(BASE_DIR, "assets", "Configuracoes.png"),
-            "Informações": os.path.join(BASE_DIR, "assets", "Informacoes.png"),
-        }
-
-        for nome, icone in ICONES.items():
-            # Caminho completo do ícone
-            caminho_completo = os.path.join(BASE_DIR, icone)
-            print(f"Carregando ícone para '{nome}': {caminho_completo}")  # Adicionado para debug
-
-            # Cria o widget para organizar ícone e texto verticalmente
-            botao_widget = QWidget()
-            botao_widget.setStyleSheet("background: transparent;")  # Garante que o widget é transparente
-
-            botao_layout = QVBoxLayout(botao_widget)
-            botao_layout.setContentsMargins(0, 0, 0, 0)  # Remove margens internas
-            botao_layout.setSpacing(5)  # Espaçamento entre ícone e texto
-
-            # Cria o botão com o ícone
-            botao = QPushButton()
-            botao.setIcon(QIcon(caminho_completo))
-            botao.setIconSize(QSize(35, 35))  # Ajusta o tamanho do ícone
-            botao.setStyleSheet("border: none; background: transparent;")
-
-            # Conecta o botão à funcionalidade correspondente
-            botao.clicked.connect(self.criar_conexao(nome))
-
-            # Cria o rótulo do texto abaixo do ícone
-            rotulo = QLabel(nome)
-            rotulo.setAlignment(Qt.AlignCenter)
-            rotulo.setStyleSheet(f"""
-                font-family: ArialBlack;
-                font-size: 14px;
-                font-weight: bold;  /* Negrito no texto */
-                color: black;  /* Preto padrão */
-                background: transparent;  /* Sem fundo */
-            """)
-
-            def criar_eventos_hover(botao, rotulo):
-                def on_enter(event):
-                    botao.setIconSize(QSize(40, 40))  # Ícone maior
-                    rotulo.setStyleSheet(f"""
-                        font-family: ArialBlack;
-                        font-size: 18px;
-                        font-weight: bold;
-                        color: black;
-                        background: transparent;
-                    """)
-
-                def on_leave(event):
-                    botao.setIconSize(QSize(35, 35))  # Ícone normal
-                    rotulo.setStyleSheet(f"""
-                        font-family: ArialBlack;
-                        font-size: 14px;
-                        font-weight: bold;
-                        color: black;
-                        background: transparent;
-                    """)
-
-                botao.enterEvent = on_enter
-                botao.leaveEvent = on_leave
-
-            # Adiciona eventos de hover
-            criar_eventos_hover(botao, rotulo)
-
-            # Adiciona o botão e o rótulo ao layout vertical
-            botao_layout.addWidget(botao, alignment=Qt.AlignCenter)
-            botao_layout.addWidget(rotulo)
-
-            # Adiciona o widget completo ao layout horizontal
-            layout.addWidget(botao_widget, alignment=Qt.AlignCenter)
-
-        # Adiciona a logo como um botão clicável, sem fundo
-        logo_path = os.path.join(BASE_DIR, "assets", "Logo.png")
-        logo_button = QPushButton()
-        logo_button.setIcon(QIcon(logo_path))
-        logo_button.setIconSize(QSize(140, 80))  # Ajuste do tamanho da logo
-        logo_button.setStyleSheet("border: none; background: transparent;")  # Remove fundo e borda
-        layout.addWidget(logo_button, alignment=Qt.AlignRight)  # Alinha a logo à direita
-    
     def criar_conexao(self, nome):
-        """Cria uma conexão para o botão com o nome especificado."""
+        """Cria uma conexão para abrir o módulo especificado."""
         def on_click():
-            if nome == "Cadastros":
-                self.abrir_modulo("Cadastros_Tela")
-            elif nome == "Testes":
-                self.abrir_modulo("Testes_Tela")
-            elif nome == "Resultados":
-                self.abrir_modulo("Resultados_Tela")
-            elif nome == "Configurações":
-                self.abrir_modulo("Configuracoes_Tela")
-            elif nome == "Informações":
-                self.abrir_modulo("Informacoes_Tela")
+            self.abrir_modulo(nome)
         return on_click
-    
+
     def abrir_modulo(self, modulo):
-        """Carrega o módulo especificado na área principal usando QStackedLayout."""
+        """Carrega o módulo especificado na área principal e atualiza o botão selecionado."""
         if not hasattr(self, "stacked_layout"):
             # Cria o QStackedLayout apenas uma vez
             self.stacked_layout = QStackedLayout()
             self.main_area.setLayout(self.stacked_layout)
-            
-            # Adiciona os módulos ao layout empilhado
-            from frontend.Cadastros_Tela import CadastrosTela
-            self.tela_cadastros = CadastrosTela(self)
-            self.stacked_layout.addWidget(self.tela_cadastros)
+            self.modulos_carregados = {}  # Dicionário para armazenar os widgets carregados
 
-            from src.frontend.Testes_Tela import TestesTela
-            self.tela_testes = TestesTela(self)
-            self.stacked_layout.addWidget(self.tela_testes)
+        if modulo not in self.modulos_carregados:
+            try:
+                # Importa o módulo dinamicamente a partir do mapeamento
+                modulo_path = self.mapeamento_modulos[modulo]
+                module_name, class_name = modulo_path.rsplit(".", 1)
+                imported_module = __import__(module_name, fromlist=[class_name])
+                widget_class = getattr(imported_module, class_name)
 
-            from src.frontend.Resultados_Tela import ResultadosTela
-            self.tela_resultados = ResultadosTela(self)
-            self.stacked_layout.addWidget(self.tela_resultados)
-
-            from src.frontend.Configuracoes_Tela import ConfiguracoesTela
-            self.tela_configuracoes = ConfiguracoesTela(self)
-            self.stacked_layout.addWidget(self.tela_configuracoes)
-
-            from src.frontend.Informacoes_Tela import  InformacoesTela
-            self.tela_informacoes = InformacoesTela(self)
-            self.stacked_layout.addWidget(self.tela_informacoes)
+                # Instancia o widget e adiciona ao QStackedLayout
+                widget_instance = widget_class(self)
+                self.stacked_layout.addWidget(widget_instance)
+                self.modulos_carregados[modulo] = widget_instance
+            except (ImportError, AttributeError) as e:
+                print(f"Erro ao carregar o módulo {modulo}: {e}")
+                return
 
         # Alterna para o módulo apropriado
-        if modulo == "Cadastros_Tela":
-            self.stacked_layout.setCurrentWidget(self.tela_cadastros)
-        elif modulo == "Testes_Tela":
-            self.stacked_layout.setCurrentWidget(self.tela_testes)
-        elif modulo == "Resultados_Tela":
-            self.stacked_layout.setCurrentWidget(self.tela_resultados)
-        elif modulo == "Configuracoes_Tela":
-            self.stacked_layout.setCurrentWidget(self.tela_configuracoes)
-        elif modulo == "Informacoes_Tela":
-            self.stacked_layout.setCurrentWidget(self.tela_informacoes)
-        else:
-            print(f"Módulo {modulo} não encontrado.")
+        self.stacked_layout.setCurrentWidget(self.modulos_carregados[modulo])
+        self.atualizar_estilo_botoes(modulo)  # Atualiza o estilo dos botões
+    
+    def atualizar_estilo_botoes(self, modulo_selecionado):
+        """Atualiza o estilo dos botões da barra superior com base no módulo selecionado."""
+        for nome, botao in self.top_bar_buttons.items():
+            if nome == modulo_selecionado:
+                botao.setProperty("selected", True)
+                botao.style().unpolish(botao)
+                botao.style().polish(botao)
+            else:
+                botao.setProperty("selected", False)
+                botao.style().unpolish(botao)
+                botao.style().polish(botao)
 
-    def carregar_cadastros(self, layout):
-        """Carrega a tela de Cadastros_Tela na área principal."""
-        from frontend.Cadastros_Tela import CadastrosTela # Importa o widget da tela de cadastros
-        
-        # Limpa widgets anteriores da área principal
-        for i in reversed(range(layout.count())):
-            widget = layout.itemAt(i).widget()
-            if widget is not None:
-                widget.setParent(None)
-
-        # Adiciona a tela de cadastros à área principal
-        cadastros_tela = CadastrosTela(parent=self)
-        layout.addWidget(cadastros_tela)
-
-    def carregar_testes(self, layout):
-        """Carrega o módulo de Testes na área principal."""
-        label = QLabel("Módulo: Testes")
+    def mostrar_erro(self, mensagem):
+        """Exibe uma mensagem de erro na área principal."""
+        erro_widget = QWidget()
+        layout = QVBoxLayout(erro_widget)
+        label = QLabel(f"Erro: {mensagem}")
         label.setAlignment(Qt.AlignCenter)
-        label.setFont(QFont("Arial", 14, QFont.Bold))
+        label.setFont(QFont("Arial", 16, QFont.Bold))
         layout.addWidget(label)
 
-    def carregar_resultados(self, layout):
-        """Carrega o módulo de Resultados na área principal."""
-        label = QLabel("Módulo: Resultados")
-        label.setAlignment(Qt.AlignCenter)
-        label.setFont(QFont("Arial", 14, QFont.Bold))
-        layout.addWidget(label)
+        self.stacked_layout.addWidget(erro_widget)
+        self.stacked_layout.setCurrentWidget(erro_widget)
+    
+    def mostrar_logo_info(self):
+        QMessageBox.information(self, "Sobre", "Software EBS-010\nVersão 1.0")
 
-    def carregar_configuracoes(self, layout):
-        """Carrega o módulo de Configurações na área principal."""
-        label = QLabel("Módulo: Configurações")
-        label.setAlignment(Qt.AlignCenter)
-        label.setFont(QFont("Arial", 14, QFont.Bold))
-        layout.addWidget(label)
-
-    def carregar_informacoes(self, layout):
-        """Carrega o módulo de Informações na área principal."""
-        label = QLabel("Módulo: Informações")
-        label.setAlignment(Qt.AlignCenter)
-        label.setFont(QFont("Arial", 14, QFont.Bold))
-        layout.addWidget(label)
-
-
-    # Criação da área central
-        self.central_area = QWidget()
-        self.central_layout = QVBoxLayout()
-        self.central_area.setLayout(self.central_layout)
-        self.setCentralWidget(self.central_area)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
