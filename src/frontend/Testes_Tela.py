@@ -45,7 +45,6 @@ STYLES = {
     """
 }
 
-
 class TestesTela(QWidget):
     resultado_recebido = pyqtSignal(str)
     erro_recebido = pyqtSignal(str)
@@ -75,9 +74,13 @@ class TestesTela(QWidget):
         self.tabs.addTab(self.tab_manual, "Testes Manuais")
         self.tabs.addTab(self.tab_automatico, "Testes Automáticos")
 
+        # Inicializa o widget de status
+        self.init_status_widget()
+
         # Layout principal
         layout = QVBoxLayout(self)
         layout.addWidget(self.tabs)
+        layout.addWidget(self.status_widget)  # Adiciona o widget de status ao layout principal
 
     def setup_tab_manual(self):
         """Configura a aba de Testes Manuais."""
@@ -151,7 +154,7 @@ class TestesTela(QWidget):
     def init_status_widget(self):
         """Configura o widget de status e spinner."""
         self.status_widget = QWidget(self)
-        self.status_widget.setFixedSize(200, 50)
+        self.status_widget.setFixedSize(300, 50)  # Aumenta o tamanho para melhor visibilidade
         self.status_widget.setStyleSheet("background-color: transparent;")
         self.status_widget.hide()
 
@@ -159,8 +162,8 @@ class TestesTela(QWidget):
         status_layout.setContentsMargins(0, 0, 0, 0)
 
         self.status_label = QLabel("Status: Pronto", self.status_widget)
-        self.status_label.setStyleSheet(STYLES["button_iniciar"])
-        self.status_label.setFixedSize(150, 30)
+        self.status_label.setStyleSheet(STYLES["label_status"])
+        self.status_label.setFixedSize(200, 30)  # Ajusta o tamanho da label
 
         self.spinner = QLabel(self.status_widget)
         self.spinner.setFixedSize(32, 32)
@@ -246,6 +249,9 @@ class TestesTela(QWidget):
             self.erro_recebido.emit(resultado.split("-", 1)[1])
         else:
             self.resultado_recebido.emit(resultado)
+        
+        # Limpa a seleção após o teste
+        self.tabela.clearSelection()
 
     def parar_testes(self):
         """Para os testes em execução."""

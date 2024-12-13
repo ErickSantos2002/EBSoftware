@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem,
-    QFileDialog, QLabel, QComboBox, QDateEdit, QLineEdit, QMessageBox, QFrame
+    QFileDialog, QLabel, QComboBox, QDateEdit, QLineEdit, QMessageBox, QFrame, QHeaderView
 )
 from PyQt5.QtCore import Qt, QDate, pyqtSignal
 
@@ -8,12 +8,21 @@ from src.backend.Resultados import carregar_resultados, salvar_em_excel, salvar_
 
 # Centralização de estilos
 STYLES = {
+    "input": "font-family: Arial; font-size: 12px; background-color: #f0f0f0; border: 1px solid #cccccc; padding: 5px;",
     "date_edit": """
         QDateEdit {
             font-family: Arial; font-size: 12px; background-color: #f0f0f0;
             border: 1px solid #cccccc; padding: 5px;
         }
         QDateEdit:hover { background-color: #e0e0e0; }
+    """,
+    "btn_filtros": """
+        QPushButton {
+            font-family: Arial; font-size: 12px; font-weight: bold; background-color: #0072B7; 
+            color: white; border: 1px solid #005A9E; padding: 5px 10px;
+        }
+        QPushButton:hover { background-color: #005BB5; }
+        QPushButton:pressed { background-color: #003F87; }
     """,
     "button": """
         QPushButton {
@@ -88,13 +97,18 @@ class ResultadosTela(QWidget):
 
         # Filtro de usuário
         self.usuario_todos = self.create_button("Todos os Usuários", checkable=True, checked=True, callback=self.toggle_usuarios)
-        self.input_usuario = self.create_line_edit("Digite o nome do usuário...", enabled=False)
+        self.input_usuario = self.create_line_edit("Digite o ID, Nome, Matrícula ou Setor do usuário...", enabled=False)
+
+        # Conectar Enter do input_usuario ao botão "Aplicar Filtros"
+        self.input_usuario.returnPressed.connect(self.aplicar_filtros)
 
         # Filtro de status
         self.combo_status = self.create_combo_box(["Todos", "Aprovados", "Rejeitados"])
 
         # Botão para aplicar filtros
         btn_aplicar_filtros = self.create_button("Aplicar Filtros", callback=self.aplicar_filtros)
+        # Aplica o estilo azul diretamente
+        btn_aplicar_filtros.setStyleSheet(STYLES["btn_filtros"])
 
         # Adiciona widgets ao layout de filtros
         filtros_layout.addWidget(self.periodo_todos)
@@ -112,14 +126,40 @@ class ResultadosTela(QWidget):
         layout.addLayout(filtros_layout)
 
     def init_table(self, layout):
-        """Configura a tabela para exibição de resultados."""
+        """Configura a tabela para exibição dos resultados."""
         self.tabela = QTableWidget()
-        self.tabela.setColumnCount(8)
+        self.tabela.setColumnCount(8)  # Número de colunas da tabela
         self.tabela.setHorizontalHeaderLabels([
-            "ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Qtd. Álcool", "Status"
+            "ID do Teste", "ID do Usuário", "Nome", "Matrícula", "Setor",
+            "Data e Hora", "Quantidade de Álcool", "Status"
         ])
-        self.tabela.horizontalHeader().setStretchLastSection(True)
-        self.tabela.setStyleSheet(STYLES["table"])
+        
+        # Ajusta o comportamento das colunas
+        self.tabela.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        # Ajusta o comportamento da seleção (linha inteira)
+        self.tabela.setSelectionBehavior(QTableWidget.SelectRows)
+
+        # Desativa a edição direta da tabela
+        self.tabela.setEditTriggers(QTableWidget.NoEditTriggers)
+
+        # Remove o cabeçalho vertical
+        self.tabela.verticalHeader().setVisible(False)
+
+        # Estilo da tabela
+        self.tabela.setStyleSheet("""
+            QTableWidget {
+                font-family: Arial;
+                font-size: 12px;
+                background-color: #f0f0f0;
+                border: 1px solid #cccccc;
+            }
+            QTableWidget::item {
+                padding: 5px;
+            }
+        """)
+
+        # Adiciona a tabela ao layout
         layout.addWidget(self.tabela)
 
     def init_save_buttons(self, layout):
@@ -199,7 +239,7 @@ class ResultadosTela(QWidget):
         elif status == "Rejeitados":
             status = "Rejeitado"
 
-        # Filtro de usuário (busca parcial no nome)
+        # Filtro de usuário (busca parcial por ID, Nome, Matrícula ou Setor)
         usuario_filtro = self.input_usuario.text().strip().lower() if not self.usuario_todos.isChecked() else None
 
         # Aplica os filtros usando o backend
@@ -209,7 +249,7 @@ class ResultadosTela(QWidget):
             if periodo:
                 try:
                     # Extrai e converte a data com validação
-                    data_teste_str = resultado["Data e hora"].split()[0]
+                    data_teste_str = resultado["Data e Hora"].split()[0]
                     data_teste = QDate.fromString(data_teste_str, "dd/MM/yyyy")  # Formato ajustado para PyQt5
                     if not data_teste.isValid():
                         print(f"Data inválida ignorada: {data_teste_str}")
@@ -220,16 +260,22 @@ class ResultadosTela(QWidget):
                     if not (periodo[0] <= data_teste <= periodo[1]):
                         continue
                 except Exception as e:
-                    print(f"Erro ao processar data: {resultado['Data e hora']} - {e}")
+                    print(f"Erro ao processar data: {resultado['Data e Hora']} - {e}")
                     continue
 
             # Filtra por status
             if status and resultado["Status"] != status:
                 continue
 
-            # Filtra por usuário (busca parcial)
-            if usuario_filtro and usuario_filtro not in resultado["Nome"].lower():
-                continue
+            # Filtra por usuário (busca parcial em ID, Nome, Matrícula ou Setor)
+            if usuario_filtro:
+                if not (
+                    usuario_filtro in str(resultado["ID do usuário"]).lower() or
+                    usuario_filtro in str(resultado["Nome"]).lower() or
+                    usuario_filtro in str(resultado["Matrícula"]).lower() or
+                    usuario_filtro in str(resultado["Setor"]).lower()
+                ):
+                    continue
 
             filtrados.append(resultado)
 
@@ -258,15 +304,17 @@ class ResultadosTela(QWidget):
 
     # Métodos de alternância
     def toggle_datas(self):
-        """Habilita/desabilita os campos de data."""
+        """Habilita/desabilita os campos de data e altera o texto do botão."""
         estado = not self.periodo_todos.isChecked()
         self.data_inicio.setEnabled(estado)
         self.data_fim.setEnabled(estado)
+        self.periodo_todos.setText("Selecione uma Data" if estado else "Todas as Datas")
 
     def toggle_usuarios(self):
-        """Habilita/desabilita o campo de entrada de usuário."""
+        """Habilita/desabilita o campo de entrada de usuário e altera o texto do botão."""
         estado = not self.usuario_todos.isChecked()
         self.input_usuario.setEnabled(estado)
+        self.usuario_todos.setText("Digite o Usuário" if estado else "Todos os Usuários")
 
     def atualizar_tabela(self):
         """Recarrega os resultados e atualiza a tabela."""

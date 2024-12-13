@@ -34,3 +34,8 @@ ID do teste,ID do usuário,Nome,Matrícula,Setor,Data e hora,Quantidade de Álco
 33,1,teste,testes,tetes,10/12/2024 09:23:39,0.000,Aprovado
 34,0,Automático,Automático,Automático,10/12/2024 09:24:37,0.000,Aprovado
 35,0,Automático,Automático,Automático,10/12/2024 09:24:44,0.000,Aprovado
+36,44,nome,99,99,12/12/2024 15:33:41,0.000,Aprovado
+37,44,nome,99,99,12/12/2024 15:33:50,0.000,Aprovado
+38,45,99,Matrícula,99,12/12/2024 15:33:57,0.000,Aprovado
+39,46,99,98,Setor,12/12/2024 15:34:05,0.000,Aprovado
+40,44,nome,99,99,12/12/2024 16:03:45,0.000,Aprovado

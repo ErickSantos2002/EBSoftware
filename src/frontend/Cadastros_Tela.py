@@ -19,6 +19,14 @@ BASE_DIR = (
 # Estilos centralizados
 STYLES = {
     "input": "font-family: Arial; font-size: 12px; background-color: #f0f0f0; border: 1px solid #cccccc; padding: 5px;",
+    "btn_pesquisar": """
+        QPushButton {
+            font-family: Arial; font-size: 12px; font-weight: bold; background-color: #0072B7; 
+            color: white; border: 1px solid #005A9E; padding: 5px 10px;
+        }
+        QPushButton:hover { background-color: #005BB5; }
+        QPushButton:pressed { background-color: #003F87; }
+    """,
     "button": """
         QPushButton {
             font-family: Arial; font-size: 12px; background-color: #f0f0f0;
@@ -79,12 +87,12 @@ class CadastrosTela(QWidget):
         # Campo de pesquisa
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Pesquisar por Nome, Matrícula ou Setor...")
+        self.search_input.setPlaceholderText("Pesquisar por ID, Nome, Matrícula ou Setor...")
         self.search_input.setStyleSheet(STYLES["input"])
         self.search_input.returnPressed.connect(self.pesquisar_registros)
 
         search_button = QPushButton("Pesquisar")
-        search_button.setStyleSheet(STYLES["button"])
+        search_button.setStyleSheet(STYLES["btn_pesquisar"])
         search_button.setMinimumHeight(self.search_input.sizeHint().height())  # Ajusta a altura mínima do botão
         search_button.clicked.connect(self.pesquisar_registros)
 
@@ -195,7 +203,7 @@ class CadastrosTela(QWidget):
         registros = carregar_registros()
         registros_filtrados = [
             registro for registro in registros
-            if termo in registro["Nome"].lower() or termo in registro["Matricula"].lower() or termo in registro["Setor"].lower()
+            if termo in registro["ID"].lower() or termo in registro["Nome"].lower() or termo in registro["Matricula"].lower() or termo in registro["Setor"].lower()
         ]
         self.carregar_dados_filtrados(registros_filtrados)
 
