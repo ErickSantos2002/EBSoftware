@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
+from src.backend.db import conectar
 
 if getattr(sys, 'frozen', False):
     # Diretório do executável (PyInstaller)
@@ -18,12 +19,26 @@ RESOURCES_DIR = os.path.join(BASE_DIR, "resources")  # Caminho do diretório res
 ARQUIVO_RESULTADOS = os.path.join(RESOURCES_DIR, "Resultados.csv")
 
 def carregar_resultados():
-    """Carrega os resultados do arquivo CSV."""
-    if not os.path.exists(ARQUIVO_RESULTADOS):
-        return []
-    with open(ARQUIVO_RESULTADOS, mode="r", newline="", encoding="utf-8") as file:
-        reader = csv.DictReader(file)
-        return [row for row in reader]
+    """Carrega resultados do banco de dados."""
+    with conectar() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT id, id_usuario, nome, matricula, setor, data_hora, quantidade_alcool, status
+        FROM resultados
+        """)
+        resultados = [
+            {
+                "ID do teste": row[0],
+                "ID do usuário": row[1],
+                "Nome": row[2],
+                "Matrícula": row[3],
+                "Setor": row[4],
+                "Data e hora": row[5],
+                "Quantidade de Álcool": row[6],
+                "Status": row[7],
+            } for row in cursor.fetchall()
+        ]
+    return resultados
 
 
 def filtrar_resultados(resultados, periodo=None, usuario=None, status=None):

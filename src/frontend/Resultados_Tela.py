@@ -57,6 +57,7 @@ class ResultadosTela(QWidget):
         self.setup_ui()
         self.connect_signals()
         self.carregar_tabela(self.resultados)
+        self.limite_exibicao = 100  # Começa exibindo os primeiros 100 registros
 
     def setup_ui(self):
         """Inicializa a interface do usuário."""
@@ -107,8 +108,15 @@ class ResultadosTela(QWidget):
 
         # Botão para aplicar filtros
         btn_aplicar_filtros = self.create_button("Aplicar Filtros", callback=self.aplicar_filtros)
+
+        # Botão para carregar mais registros
+        btn_carregar_mais = self.create_button(
+            "Carregar Mais", callback=self.carregar_mais_registros
+        )
+
         # Aplica o estilo azul diretamente
         btn_aplicar_filtros.setStyleSheet(STYLES["btn_filtros"])
+        btn_carregar_mais.setStyleSheet(STYLES["btn_filtros"])
 
         # Adiciona widgets ao layout de filtros
         filtros_layout.addWidget(self.periodo_todos)
@@ -122,6 +130,7 @@ class ResultadosTela(QWidget):
         filtros_layout.addWidget(QLabel("Status:"))
         filtros_layout.addWidget(self.combo_status)
         filtros_layout.addWidget(btn_aplicar_filtros)
+        filtros_layout.addWidget(btn_carregar_mais)
 
         layout.addLayout(filtros_layout)
 
@@ -210,14 +219,26 @@ class ResultadosTela(QWidget):
         return combo_box
 
     # Métodos para manipulação de dados
-    def carregar_tabela(self, resultados):
-        """Carrega os resultados na tabela."""
-        self.tabela.setRowCount(len(resultados))
-        for row, resultado in enumerate(resultados):
+    def carregar_tabela(self, resultados, limite=100):
+        """Carrega os resultados na tabela, exibindo um número limitado de registros."""
+        total_registros = len(resultados)
+        registros_exibidos = resultados[:limite]  # Limita a quantidade exibida
+
+        self.tabela.setRowCount(len(registros_exibidos))
+        for row, resultado in enumerate(registros_exibidos):
             for col, key in enumerate(resultado.keys()):
                 item = QTableWidgetItem(str(resultado[key]))
                 item.setTextAlignment(Qt.AlignCenter)
                 self.tabela.setItem(row, col, item)
+
+        # Adiciona um aviso ao usuário sobre o limite
+        if total_registros > limite:
+            QMessageBox.information(
+                self, 
+                "Aviso", 
+                f"Exibindo os primeiros {limite} registros de {total_registros}. "
+                "Use os filtros para refinar a busca."
+            )
 
     def aplicar_filtros(self):
         """Aplica filtros aos resultados e recarrega a tabela."""
@@ -320,3 +341,13 @@ class ResultadosTela(QWidget):
         """Recarrega os resultados e atualiza a tabela."""
         self.resultados = carregar_resultados()
         self.carregar_tabela(self.resultados)
+    
+    def carregar_mais_registros(self):
+        """Aumenta o limite de registros exibidos na tabela."""
+        self.limite_exibicao += 100  # Incrementa o limite em 100
+
+        if self.limite_exibicao >= len(self.resultados):
+            self.limite_exibicao = len(self.resultados)
+            self.btn_carregar_mais.hide()  # Oculta o botão quando tudo for carregado
+
+        self.carregar_tabela(self.resultados, self.limite_exibicao)

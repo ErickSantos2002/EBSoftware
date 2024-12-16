@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from backend.Cadastros import (
-    carregar_registros, adicionar_registro, apagar_registros, importar_excel,
+    carregar_cadastros, adicionar_registro, apagar_cadastros, importar_excel,
     exportar_modelo, gerar_arquivo_erros
 )
 
@@ -89,12 +89,12 @@ class CadastrosTela(QWidget):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Pesquisar por ID, Nome, Matrícula ou Setor...")
         self.search_input.setStyleSheet(STYLES["input"])
-        self.search_input.returnPressed.connect(self.pesquisar_registros)
+        self.search_input.returnPressed.connect(self.pesquisar_cadastros)
 
         search_button = QPushButton("Pesquisar")
         search_button.setStyleSheet(STYLES["btn_pesquisar"])
         search_button.setMinimumHeight(self.search_input.sizeHint().height())  # Ajusta a altura mínima do botão
-        search_button.clicked.connect(self.pesquisar_registros)
+        search_button.clicked.connect(self.pesquisar_cadastros)
 
         search_layout.addWidget(self.search_input)
         search_layout.addWidget(search_button)
@@ -183,34 +183,31 @@ class CadastrosTela(QWidget):
         input_field.setStyleSheet(STYLES["input"])
         return input_field
 
-    # Funções para manipular a tabela e registros
+    # Funções para manipular a tabela e cadastros
     def carregar_dados(self):
-        """Carrega os registros e preenche a tabela."""
-        registros = carregar_registros()
-        self.tabela.setRowCount(len(registros))
-        for row, registro in enumerate(registros):
-            id_item = CustomTableWidgetItem(str(registro["ID"]))
-            id_item.setTextAlignment(Qt.AlignCenter)
-            id_item.setData(Qt.UserRole, int(registro["ID"]))
-            self.tabela.setItem(row, 0, id_item)
+        """Carrega os cadastros do banco de dados e preenche a tabela."""
+        cadastros = carregar_cadastros()
+        self.tabela.setRowCount(len(cadastros))
+        for row, registro in enumerate(cadastros):
+            self.tabela.setItem(row, 0, QTableWidgetItem(registro["ID"]))
             self.tabela.setItem(row, 1, QTableWidgetItem(registro["Nome"]))
             self.tabela.setItem(row, 2, QTableWidgetItem(registro["Matricula"]))
             self.tabela.setItem(row, 3, QTableWidgetItem(registro["Setor"]))
 
-    def pesquisar_registros(self):
-        """Filtra os registros com base no termo pesquisado."""
+    def pesquisar_cadastros(self):
+        """Filtra os cadastros com base no termo pesquisado."""
         termo = self.search_input.text().lower()
-        registros = carregar_registros()
-        registros_filtrados = [
-            registro for registro in registros
+        cadastros = carregar_cadastros()
+        cadastros_filtrados = [
+            registro for registro in cadastros
             if termo in registro["ID"].lower() or termo in registro["Nome"].lower() or termo in registro["Matricula"].lower() or termo in registro["Setor"].lower()
         ]
-        self.carregar_dados_filtrados(registros_filtrados)
+        self.carregar_dados_filtrados(cadastros_filtrados)
 
-    def carregar_dados_filtrados(self, registros):
-        """Popula a tabela com registros filtrados."""
-        self.tabela.setRowCount(len(registros))
-        for row, registro in enumerate(registros):
+    def carregar_dados_filtrados(self, cadastros):
+        """Popula a tabela com cadastros filtrados."""
+        self.tabela.setRowCount(len(cadastros))
+        for row, registro in enumerate(cadastros):
             id_item = CustomTableWidgetItem(str(registro["ID"]))
             id_item.setTextAlignment(Qt.AlignCenter)
             id_item.setData(Qt.UserRole, int(registro["ID"]))
@@ -235,43 +232,43 @@ class CadastrosTela(QWidget):
             QMessageBox.warning(self, "Erro", str(e))
 
     def apagar_registro(self):
-        """Remove os registros selecionados."""
+        """Remove os cadastros selecionados."""
         linhas_selecionadas = self.tabela.selectionModel().selectedRows()
         if not linhas_selecionadas:
             QMessageBox.warning(self, "Erro", "Selecione um registro para apagar.")
             return
         ids_para_apagar = [self.tabela.item(linha.row(), 0).text() for linha in linhas_selecionadas]
-        apagar_registros(ids_para_apagar)
-        QMessageBox.information(self, "Sucesso", "Registros apagados com sucesso.")
+        apagar_cadastros(ids_para_apagar)
+        QMessageBox.information(self, "Sucesso", "cadastros apagados com sucesso.")
         self.carregar_dados()
 
     def importar_cadastro(self):
-        """Importa registros de um arquivo Excel."""
+        """Importa cadastros de um arquivo Excel."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Selecionar arquivo Excel", "", "Arquivos Excel (*.xlsx)")
         if file_path:
             try:
-                registros, erros = importar_excel(file_path)
+                cadastros, erros = importar_excel(file_path)
                 self.carregar_dados()
                 if erros:
                     erro_path = os.path.join(os.path.dirname(file_path), "Erros_Importacao.xlsx")
                     gerar_arquivo_erros(erros, erro_path)
-                    QMessageBox.warning(self, "Aviso", f"Alguns registros apresentaram erros. Detalhes salvos em: {erro_path}")
+                    QMessageBox.warning(self, "Aviso", f"Alguns cadastros apresentaram erros. Detalhes salvos em: {erro_path}")
                 else:
-                    QMessageBox.information(self, "Sucesso", "Todos os registros foram importados com sucesso!")
+                    QMessageBox.information(self, "Sucesso", "Todos os cadastros foram importados com sucesso!")
             except Exception as e:
-                QMessageBox.critical(self, "Erro", f"Erro ao importar registros: {e}")
+                QMessageBox.critical(self, "Erro", f"Erro ao importar cadastros: {e}")
 
     def exportar_cadastro(self):
-        """Exporta os registros para um arquivo Excel."""
-        file_path, _ = QFileDialog.getSaveFileName(self, "Salvar registros", "Cadastros", "Arquivos Excel (*.xlsx)")
+        """Exporta os cadastros para um arquivo Excel."""
+        file_path, _ = QFileDialog.getSaveFileName(self, "Salvar cadastros", "Cadastros", "Arquivos Excel (*.xlsx)")
         if file_path:
             try:
-                registros = carregar_registros()
-                df = pd.DataFrame(registros)
+                cadastros = carregar_cadastros()
+                df = pd.DataFrame(cadastros)
                 df.to_excel(file_path, index=False)
-                QMessageBox.information(self, "Sucesso", f"Registros exportados para {file_path}")
+                QMessageBox.information(self, "Sucesso", f"cadastros exportados para {file_path}")
             except Exception as e:
-                QMessageBox.critical(self, "Erro", f"Erro ao exportar registros: {e}")
+                QMessageBox.critical(self, "Erro", f"Erro ao exportar cadastros: {e}")
 
     def baixar_modelo_base(self):
         """Salva um modelo de cadastro em Excel."""

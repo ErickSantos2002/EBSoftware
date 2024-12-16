@@ -3,10 +3,12 @@ import csv
 import pandas as pd
 import sys
 from PyQt5.QtCore import QObject, pyqtSignal
+import sqlite3
+from src.backend.db import conectar
 
 # Gerenciador de sinais
 class SignalManager(QObject):
-    registros_atualizados = pyqtSignal()
+    cadastros_atualizados = pyqtSignal()
 
 # Instância global do gerenciador de sinais
 sinal_global = SignalManager()
@@ -14,14 +16,14 @@ sinal_global = SignalManager()
 # Diretórios e arquivos
 BASE_DIR = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RESOURCES_DIR = os.path.join(BASE_DIR, "resources")
-ARQUIVO_CSV = os.path.join(RESOURCES_DIR, "registros.csv")
+ARQUIVO_CSV = os.path.join(RESOURCES_DIR, "cadastros.csv")
 
 # ---------------------------------------
 # Funções de Inicialização e Utilidades
 # ---------------------------------------
 
 def inicializar_arquivo_csv():
-    """Verifica e cria o arquivo CSV de registros, se necessário."""
+    """Verifica e cria o arquivo CSV de cadastros, se necessário."""
     if not os.path.exists(RESOURCES_DIR):
         os.makedirs(RESOURCES_DIR)
     if not os.path.exists(ARQUIVO_CSV):
@@ -30,70 +32,56 @@ def inicializar_arquivo_csv():
             writer.writeheader()
 
 # ---------------------------------------
-# Funções de Manipulação de Registros
+# Funções de Manipulação de cadastros
 # ---------------------------------------
 
-def carregar_registros():
-    """Carrega registros do arquivo CSV, removendo inconsistências e duplicados."""
-    if not os.path.exists(ARQUIVO_CSV):
-        return []
+def carregar_cadastros():
+    """Carrega cadastros do banco de dados."""
+    with conectar() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, nome, matricula, setor FROM cadastros")
+        cadastros = [{"ID": str(row[0]), "Nome": row[1], "Matricula": row[2], "Setor": row[3]} for row in cursor.fetchall()]
+    return cadastros
 
-    with open(ARQUIVO_CSV, mode="r", newline="", encoding="utf-8") as file:
-        reader = csv.DictReader(file)
-        registros, ids_vistos = [], set()
-
-        for row in reader:
-            row["ID"] = str(row["ID"]).strip()
-            if row["ID"] not in ids_vistos:
-                ids_vistos.add(row["ID"])
-                registros.append({k.strip(): v.strip() for k, v in row.items()})
-
-        return registros
-
-def salvar_registros(registros):
-    """Salva a lista de registros no arquivo CSV."""
+def salvar_cadastros(cadastros):
+    """Salva a lista de cadastros no arquivo CSV."""
     with open(ARQUIVO_CSV, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=["ID", "Nome", "Matricula", "Setor"])
         writer.writeheader()
-        writer.writerows(registros)
+        writer.writerows(cadastros)
 
 def adicionar_registro(nome, matricula, setor):
-    """Adiciona um novo registro ao arquivo CSV."""
-    registros = carregar_registros()
+    """Adiciona um novo registro ao banco de dados."""
+    with conectar() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+            INSERT INTO cadastros (nome, matricula, setor)
+            VALUES (?, ?, ?)""", (nome, matricula, setor))
+            conn.commit()
+            sinal_global.cadastros_atualizados.emit()  # Notifica a interface
+        except sqlite3.IntegrityError:
+            raise ValueError("Matrícula duplicada")
 
-    if any(r["Matricula"] == matricula for r in registros):
-        raise ValueError("Matrícula duplicada")
-
-    # Calcula o próximo ID
-    max_id = max((int(r["ID"]) for r in registros), default=0)
-    novo_registro = {"ID": str(max_id + 1), "Nome": nome.strip(), "Matricula": matricula.strip(), "Setor": setor.strip()}
-    registros.append(novo_registro)
-
-    salvar_registros(registros)
-    sinal_global.registros_atualizados.emit()  # Emite sinal de atualização
-    return novo_registro
-
-def apagar_registros(ids_para_apagar):
-    """Remove registros pelo ID fornecido."""
-    registros = carregar_registros()
-    ids_para_apagar = set(map(str, ids_para_apagar))  # Converte IDs para strings
-    registros_filtrados = [r for r in registros if r["ID"] not in ids_para_apagar]
-
-    salvar_registros(registros_filtrados)
-    sinal_global.registros_atualizados.emit()  # Emite sinal de atualização
-    return registros_filtrados
+def apagar_cadastros(ids_para_apagar):
+    """Remove cadastros do banco de dados pelo ID."""
+    with conectar() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM cadastros WHERE id IN ({})".format(", ".join("?" * len(ids_para_apagar))), ids_para_apagar)
+        conn.commit()
+        sinal_global.cadastros_atualizados.emit()
 
 # ---------------------------------------
 # Funções de Importação e Exportação
 # ---------------------------------------
 
 def importar_excel(file_path):
-    """Importa registros de um arquivo Excel, identificando erros."""
-    registros = carregar_registros()
+    """Importa cadastros de um arquivo Excel, identificando erros."""
+    cadastros = carregar_cadastros()
     erros = []
 
     # Calcula o próximo ID disponível com base no maior ID atual
-    max_id = max((int(r["ID"]) for r in registros), default=0)
+    max_id = max((int(r["ID"]) for r in cadastros), default=0)
 
     try:
         df = pd.read_excel(file_path)
@@ -110,19 +98,19 @@ def importar_excel(file_path):
                 continue
 
             # Verifica se a matrícula já existe
-            if any(r["Matricula"] == matricula for r in registros):
+            if any(r["Matricula"] == matricula for r in cadastros):
                 erros.append({"Nome": nome, "Matricula": matricula, "Setor": setor, "Erro": "Matrícula duplicada"})
                 continue
 
             # Adiciona o novo registro
             max_id += 1
             novo_registro = {"ID": str(max_id), "Nome": nome, "Matricula": matricula, "Setor": setor}
-            registros.append(novo_registro)
+            cadastros.append(novo_registro)
 
-        # Salva os registros válidos no arquivo CSV
-        salvar_registros(registros)
+        # Salva os cadastros válidos no arquivo CSV
+        salvar_cadastros(cadastros)
 
-        return registros, erros
+        return cadastros, erros
     except Exception as e:
         raise Exception(f"Erro ao importar Excel: {e}")
 
@@ -146,5 +134,5 @@ def gerar_arquivo_erros(erros, file_path):
 
 if __name__ == "__main__":
     inicializar_arquivo_csv()
-    print("Registros carregados:")
-    print(carregar_registros())
+    print("cadastros carregados:")
+    print(carregar_cadastros())

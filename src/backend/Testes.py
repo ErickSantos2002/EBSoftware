@@ -7,6 +7,7 @@ import configparser
 from threading import Thread
 from datetime import datetime
 from PyQt5.QtCore import QObject, pyqtSignal
+from src.backend.db import conectar
 
 executando_automatico = False
 executando_manual = False
@@ -130,8 +131,8 @@ def proximo_id_teste():
 from datetime import datetime
 
 # Função para salvar resultados
-def salvar_resultado(id_teste, id_usuario, nome, matricula, setor, data_hora, resultado):
-    """Salva o resultado do teste no arquivo CSV."""
+def salvar_resultado(id_usuario, nome, matricula, setor, data_hora, resultado):
+    """Salva o resultado do teste no banco de dados SQLite."""
     quantidade, status = resultado.split("-")  # Exemplo: "0.000-OK" ou "1.125-HIGH"
 
     # Ajusta o status para "Aprovado" ou "Rejeitado"
@@ -140,27 +141,20 @@ def salvar_resultado(id_teste, id_usuario, nome, matricula, setor, data_hora, re
     elif status == "HIGH":
         status = "Rejeitado"
 
-    # Formata a data no estilo DD/MM/YYYY HH:MM:SS
+    # Garante que a data está no formato correto
     if isinstance(data_hora, datetime):
-        data_hora = data_hora.strftime("%d/%m/%Y %H:%M:%S")
+        data_hora = data_hora.strftime("%Y-%m-%d %H:%M:%S")
 
-    # Salva os dados no arquivo CSV
-    with open(ARQUIVO_RESULTADOS, mode="a", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=[
-            "ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Quantidade de Álcool", "Status"
-        ])
-        writer.writerow({
-            "ID do teste": id_teste,
-            "ID do usuário": id_usuario,
-            "Nome": nome,
-            "Matrícula": matricula,
-            "Setor": setor,
-            "Data e hora": data_hora,  # Já no formato correto
-            "Quantidade de Álcool": quantidade,
-            "Status": status
-        })
+    # Insere os dados no banco de dados
+    with conectar() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO resultados (id_usuario, nome, matricula, setor, data_hora, quantidade_alcool, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (id_usuario, nome, matricula, setor, data_hora, float(quantidade), status))
+        conn.commit()
 
-    # Emite o sinal para notificar que o CSV foi atualizado
+    # Emite o sinal para notificar que o banco foi atualizado
     sinal_global.resultado_atualizado.emit()
 
 def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callback=None):
@@ -210,7 +204,6 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
                         quantidade, status = resultado.split("-")
 
                         salvar_resultado(
-                            id_teste,
                             id_usuario if not automatico else 0,
                             nome if not automatico else "Automático",
                             matricula if not automatico else "Automático",

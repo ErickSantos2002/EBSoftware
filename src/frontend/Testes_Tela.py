@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QMovie
 
-from backend.Cadastros import carregar_registros, sinal_global
+from backend.Cadastros import carregar_cadastros, sinal_global
 from src.backend.Testes import executar_teste, parar_testes
 
 # Determina o diretório base (suporta tanto execução normal quanto empacotamento com PyInstaller)
@@ -54,7 +54,7 @@ class TestesTela(QWidget):
 
         self.setup_ui()
         self.connect_signals()
-        self.carregar_registros()
+        self.carregar_cadastros()
 
     def setup_ui(self):
         """Configura o layout principal e os componentes da tela."""
@@ -89,7 +89,7 @@ class TestesTela(QWidget):
         # Barra de pesquisa
         self.init_search_bar(layout)
 
-        # Tabela de registros
+        # Tabela de cadastros
         self.init_table(layout)
 
         # Botões específicos para teste manual
@@ -118,7 +118,7 @@ class TestesTela(QWidget):
 
     def connect_signals(self):
         """Conecta sinais aos respectivos slots."""
-        sinal_global.registros_atualizados.connect(self.carregar_registros)
+        sinal_global.cadastros_atualizados.connect(self.carregar_cadastros)
         self.resultado_recebido.connect(self.mostrar_resultado)
         self.erro_recebido.connect(self.mostrar_erro)
 
@@ -128,18 +128,18 @@ class TestesTela(QWidget):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Pesquisar por Nome, Matrícula ou Setor...")
         self.search_input.setStyleSheet(STYLES["input"])
-        self.search_input.returnPressed.connect(self.pesquisar_registros)
+        self.search_input.returnPressed.connect(self.pesquisar_cadastros)
 
         search_button = QPushButton("Pesquisar")
         search_button.setStyleSheet(STYLES["button_iniciar"])
-        search_button.clicked.connect(self.pesquisar_registros)
+        search_button.clicked.connect(self.pesquisar_cadastros)
 
         search_layout.addWidget(self.search_input)
         search_layout.addWidget(search_button)
         layout.addLayout(search_layout)
 
     def init_table(self, layout):
-        """Configura a tabela para exibição dos registros."""
+        """Configura a tabela para exibição dos cadastros."""
         self.tabela = QTableWidget()
         self.tabela.setColumnCount(4)
         self.tabela.setHorizontalHeaderLabels(["ID", "Nome", "Matrícula", "Setor"])
@@ -182,28 +182,28 @@ class TestesTela(QWidget):
         button.clicked.connect(callback)
         return button
 
-    # Métodos de controle de registros
-    def carregar_registros(self):
-        """Carrega os registros e exibe na tabela."""
-        registros = carregar_registros()
-        self.populate_table(registros)
+    # Métodos de controle de cadastros
+    def carregar_cadastros(self):
+        """Carrega os cadastros e exibe na tabela."""
+        cadastros = carregar_cadastros()
+        self.populate_table(cadastros)
 
-    def pesquisar_registros(self):
-        """Filtra registros com base no termo pesquisado."""
+    def pesquisar_cadastros(self):
+        """Filtra cadastros com base no termo pesquisado."""
         termo = self.search_input.text().lower()
-        registros = carregar_registros()
-        registros_filtrados = [
-            registro for registro in registros
+        cadastros = carregar_cadastros()
+        cadastros_filtrados = [
+            registro for registro in cadastros
             if termo in str(registro["Nome"]).lower()
             or termo in str(registro["Matricula"]).lower()
             or termo in str(registro["Setor"]).lower()
         ]
-        self.populate_table(registros_filtrados)
+        self.populate_table(cadastros_filtrados)
 
-    def populate_table(self, registros):
-        """Popula a tabela com os registros fornecidos."""
-        self.tabela.setRowCount(len(registros))
-        for row, registro in enumerate(registros):
+    def populate_table(self, cadastros):
+        """Popula a tabela com os cadastros fornecidos."""
+        self.tabela.setRowCount(len(cadastros))
+        for row, registro in enumerate(cadastros):
             self.tabela.setItem(row, 0, QTableWidgetItem(str(registro["ID"])))
             self.tabela.setItem(row, 1, QTableWidgetItem(registro["Nome"]))
             self.tabela.setItem(row, 2, QTableWidgetItem(registro["Matricula"]))
