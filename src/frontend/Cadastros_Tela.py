@@ -3,12 +3,12 @@ import sys
 import pandas as pd
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QPushButton,
-    QLineEdit, QFormLayout, QMessageBox, QHeaderView, QFrame, QFileDialog
+    QLineEdit, QFormLayout, QMessageBox, QHeaderView, QFrame, QFileDialog, QInputDialog
 )
 from PyQt5.QtCore import Qt
 from backend.Cadastros import (
     carregar_cadastros, adicionar_registro, apagar_cadastros, importar_excel,
-    exportar_modelo, gerar_arquivo_erros
+    exportar_modelo, gerar_arquivo_erros, atualizar_cadastro
 )
 
 # Determina o diretório base
@@ -173,6 +173,12 @@ class CadastrosTela(QWidget):
         apagar_btn.clicked.connect(self.apagar_registro)
         right_panel.addWidget(apagar_btn)
 
+        # Botão editar cadastro
+        editar_btn = QPushButton("Editar Cadastro")
+        editar_btn.setStyleSheet(STYLES["button"])
+        editar_btn.clicked.connect(self.editar_cadastro)
+        right_panel.addWidget(editar_btn)
+
         # Adiciona o painel direito ao layout principal
         layout.addLayout(right_panel, stretch=1)
 
@@ -279,3 +285,48 @@ class CadastrosTela(QWidget):
                 QMessageBox.information(self, "Sucesso", f"Modelo base salvo em {file_path}")
             except Exception as e:
                 QMessageBox.critical(self, "Erro", f"Erro ao salvar modelo base: {e}")
+
+    def editar_cadastro(self):
+        """Edita os campos Nome, Matrícula ou Setor de um usuário selecionado."""
+        linhas_selecionadas = self.tabela.selectionModel().selectedRows()
+        if not linhas_selecionadas:
+            QMessageBox.warning(self, "Erro", "Selecione um registro para editar.")
+            return
+
+        linha = linhas_selecionadas[0].row()
+        id_usuario = self.tabela.item(linha, 0).text()  # ID do usuário
+
+        # Solicitar o novo nome
+        nome_atual = self.tabela.item(linha, 1).text()
+        novo_nome, ok_nome = QInputDialog.getText(self, "Editar Nome", "Digite o novo nome:", QLineEdit.Normal, nome_atual)
+        if not ok_nome:  # Usuário cancelou a edição do nome
+            return
+        if not novo_nome.strip():
+            QMessageBox.warning(self, "Aviso", "Nome não pode estar vazio.")
+            return
+
+        # Solicitar a nova matrícula
+        matricula_atual = self.tabela.item(linha, 2).text()
+        nova_matricula, ok_matricula = QInputDialog.getText(self, "Editar Matrícula", "Digite a nova matrícula:", QLineEdit.Normal, matricula_atual)
+        if not ok_matricula:  # Usuário cancelou a edição da matrícula
+            return
+        if not nova_matricula.strip():
+            QMessageBox.warning(self, "Aviso", "Matrícula não pode estar vazia.")
+            return
+
+        # Solicitar o novo setor
+        setor_atual = self.tabela.item(linha, 3).text()
+        novo_setor, ok_setor = QInputDialog.getText(self, "Editar Setor", "Digite o novo setor:", QLineEdit.Normal, setor_atual)
+        if not ok_setor:  # Usuário cancelou a edição do setor
+            return
+        if not novo_setor.strip():
+            QMessageBox.warning(self, "Aviso", "Setor não pode estar vazio.")
+            return
+
+        # Atualizar os campos no banco de dados
+        try:
+            atualizar_cadastro(id_usuario, novo_nome.strip(), nova_matricula.strip(), novo_setor.strip())
+            QMessageBox.information(self, "Sucesso", "Cadastro atualizado com sucesso!")
+            self.carregar_dados()  # Recarrega os dados para refletir a atualização
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", str(e))

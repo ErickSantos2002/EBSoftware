@@ -35,6 +35,21 @@ def inicializar_arquivo_csv():
 # Funções de Manipulação de cadastros
 # ---------------------------------------
 
+def atualizar_cadastro(id_usuario, nome, matricula, setor):
+    """Atualiza os dados de um cadastro no banco de dados."""
+    with conectar() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                UPDATE cadastros
+                SET nome = ?, matricula = ?, setor = ?
+                WHERE id = ?
+            """, (nome, matricula, setor, id_usuario))
+            conn.commit()
+            sinal_global.cadastros_atualizados.emit()  # Notifica a interface
+        except sqlite3.IntegrityError:
+            raise ValueError("Matrícula duplicada.")
+        
 def carregar_cadastros():
     """Carrega cadastros do banco de dados."""
     with conectar() as conn:

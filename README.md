@@ -1,126 +1,121 @@
-# Integração do EBS-010 com Python
+# EBS-010 Software
 
-## Visão Geral
-Este projeto demonstra um sistema de comunicação baseado em Python para o dispositivo bafômetro EBS-010. O sistema interage com o bafômetro via USB utilizando um protocolo de comunicação serial, permitindo o envio de comandos e o processamento de respostas para testes de níveis de álcool no sangue.
-
----
+## Descrição
+O EBS-010 é um software desenvolvido para gerenciar dispositivos de teste de álcool com foco em segurança no trabalho. Ele utiliza comunicação serial para se conectar a dispositivos de medição, gerencia cadastros e resultados, e oferece uma interface gráfica amigável construída com PyQt5.
 
 ## Funcionalidades
-- Envia comandos ao dispositivo EBS-010 para iniciar testes e obter resultados.
-- Gerencia diferentes estados do dispositivo, como aquecimento, standby, ativação do gatilho e recuperação de resultados de testes.
-- Processa e registra resultados de testes, incluindo níveis de álcool e status do teste (por exemplo, "OK", "HIGH").
-- Salva resultados em um arquivo CSV para análise futura.
-- Identifica e trata erros como problemas no sensor, erros de fluxo e avisos de bateria baixa.
 
----
+### Principais Recursos:
+1. **Gestão de Cadastros**:
+   - Cadastrar, editar e apagar usuários.
+   - Importar e exportar cadastros em formato Excel.
+   - Interface intuitiva para gerenciamento.
+
+2. **Execução de Testes**:
+   - Testes manuais e automáticos com suporte a conexão serial.
+   - Controle de execução e interrupção de testes.
+   - Armazenamento de resultados no banco de dados SQLite.
+
+3. **Gestão de Resultados**:
+   - Visualização de resultados com filtros por data, usuário e status.
+   - Exportação dos resultados em formatos Excel e PDF.
+
+4. **Configurações**:
+   - Configuração da porta serial utilizada pelo dispositivo.
+   - Detecção automática de portas compatíveis.
+
+5. **Informações do Aparelho**:
+   - Consulta e armazenamento de limites e informações do dispositivo.
 
 ## Requisitos
-### Hardware
-- **Dispositivo EBS-010**
-- Conexão USB com o computador
 
-### Software
-- Python 3.8 ou superior
-- Bibliotecas:
-  - `pyserial`: Para comunicação serial
-  - `datetime`: Para registro de data e hora dos resultados
-  - `csv`: Para salvar os resultados em um arquivo CSV
+### Sistema Operacional
+- Windows, macOS ou Linux.
 
-Para instalar a biblioteca Python necessária:
+### Dependências
+- Python 3.8+
+- PyQt5
+- pandas
+- openpyxl
+- reportlab
+- sqlite3
+- pyserial
+
+### Instalação de Dependências
+Instale as dependências utilizando o comando:
 ```bash
-pip install pyserial
+pip install -r requirements.txt
 ```
 
----
+## Estrutura do Projeto
 
-## Protocolo de Comunicação
-### Configuração da Porta Serial
-| Parâmetro         | Valor           |
-|-------------------|-----------------|
-| Taxa de Baud      | 4800            |
-| Bits de Dados     | 8               |
-| Paridade          | Nenhuma         |
-| Bits de Parada    | 1               |
-| Timeout           | 1 segundo       |
+```
+EBS-010
+├── main.py                # Ponto de entrada principal.
+├── src/
+│   ├── backend/
+│   │   ├── Cadastros.py  # Lógica de gestão de cadastros.
+│   │   ├── Configuracoes.py # Configuração da porta serial.
+│   │   ├── db.py         # Inicialização e conexão com SQLite.
+│   │   ├── Informacoes.py # Consulta e armazenamento de informações do dispositivo.
+│   │   ├── Resultados.py # Manipulação e exportação de resultados.
+│   │   └── Teste.py      # Execução de testes e comunicação serial.
+│   ├── frontend/
+│       ├── Cadastros_Tela.py # Interface de gestão de cadastros.
+│       ├── Configuracoes_Tela.py # Interface de configuração.
+│       ├── Informacoes_Tela.py # Interface de informações do aparelho.
+│       ├── Resultados_Tela.py # Interface de visualização de resultados.
+│       ├── Testes_Tela.py # Interface de execução de testes.
+│       └── Interface.py  # Janela principal do aplicativo.
+├── resources/            # Diretório de recursos (imagens, banco de dados, etc).
+│   ├── database.db       # Arquivo SQLite.
+│   ├── config.ini        # Configurações de porta serial.
+│   └── info.ini          # Informações do dispositivo.
+├── requirements.txt      # Lista de dependências.
+└── README.md             # Documentação.
+```
 
-### Comandos
-#### Do Computador para o Bafômetro
-| Comando          | Descrição                        |
-|------------------|----------------------------------|
-| `$START 0D 0A`   | Liga o dispositivo bafômetro     |
-| `$RESET 0D 0A`   | Desliga o dispositivo bafômetro  |
-| `$RECALL 0D 0A`  | Recupera configurações salvas    |
+## Uso
 
-#### Do Bafômetro para o Computador
-| Resposta          | Descrição                                      |
-|-------------------|------------------------------------------------|
-| `$WAIT`           | Dispositivo em aquecimento                    |
-| `$STANBY`         | Dispositivo em modo standby                   |
-| `$TRIGGER`        | Amostra de ar ativada                         |
-| `$BREATH`         | Amostragem de ar correta                      |
-| `$RESULT,x.xxx-STATUS` | Resultado do teste, onde `STATUS` é `OK` ou `HIGH` |
-| `$FLOW,ERR`       | Erro de fluxo durante a amostragem            |
-| `$BAT,LOW`        | Bateria baixa                                 |
-| `$SENSOR,ERR`     | Erro no sensor detectado                      |
-
----
-
-## Implementação Atual
-### Funcionalidades
-1. **Iniciando o Dispositivo**:
-   - Envia o comando `$START` para ativar o bafômetro.
-2. **Processando Respostas**:
-   - Gerencia respostas como `$WAIT`, `$STANBY`, `$TRIGGER` e `$RESULT`.
-   - Registra resultados para níveis de álcool `OK` ou `HIGH`.
-3. **Salvando Resultados**:
-   - Os resultados são salvos em um arquivo CSV (`resultados.csv`) no seguinte formato:
-     ```csv
-     Data e Hora, Resposta Bruta, Valor, Status
-     2024-11-26 14:23, $RESULT,0.000-OK, 0.000, OK
-     2024-11-26 15:01, $RESULT,0.610-HIGH, 0.610, HIGH
-     ```
-4. **Tratamento de Erros**:
-   - Exibe mensagens de erro para problemas como erros de fluxo, bateria baixa ou falhas no sensor.
-
----
-
-## Como Usar
-### Executando o Script
-1. Conecte o dispositivo EBS-010 ao computador via USB.
-2. Configure a porta correta (por exemplo, `COM3` no Windows ou `/dev/ttyUSB0` no Linux).
-3. Execute o script Python:
+### Executando o Software
+1. Clone este repositório:
    ```bash
-   python EBS.py
+   git clone <repository-url>
+   cd EBS-010
    ```
-4. O script irá:
-   - Enviar o comando `$START` para o dispositivo.
-   - Aguardar as respostas e processar os resultados do teste.
-   - Salvar os resultados no arquivo `resultados.csv`.
 
-### Saída do CSV
-Os resultados serão adicionados ao arquivo `resultados.csv` no mesmo diretório do script.
+2. Certifique-se de que o Python está instalado e as dependências configuradas.
 
----
+3. Execute o programa:
+   ```bash
+   python main.py
+   ```
 
-## Melhorias Futuras
-1. **Interface Gráfica do Usuário (GUI):**
-   - Criar uma interface amigável utilizando `tkinter` ou `PyQt`.
-2. **Registros Aprimorados:**
-   - Incluir logs mais detalhados para depuração e trilhas de auditoria.
-3. **Integração com Nuvem:**
-   - Enviar resultados para um banco de dados remoto ou plataforma para monitoramento centralizado.
-4. **Suporte a Multi-Comandos:**
-   - Adicionar suporte aos comandos `$RESET` e `$RECALL`.
-5. **Configuração Dinâmica:**
-   - Permitir que os usuários configurem limites (por exemplo, níveis de álcool pré-definidos) e ajustes de comunicação serial através de um arquivo de configuração.
+### Configuração da Porta Serial
+1. Acesse o menu de configurações no software.
+2. Selecione uma porta manualmente ou utilize a busca automática.
 
----
+### Execução de Testes
+1. Escolha entre teste manual ou automático na interface principal.
+2. Acompanhe os resultados em tempo real.
 
-## Contato
-Para problemas ou contribuições, entre em contato com o responsável pelo projeto.
+### Exportação de Resultados
+1. Use a interface de resultados para filtrar e visualizar os registros.
+2. Exporte os resultados em formato Excel ou PDF conforme necessário.
 
----
+## Contribuindo
+Contribuições são bem-vindas! Siga os passos abaixo:
+1. Faça um fork deste repositório.
+2. Crie uma branch para sua feature ou correção de bug:
+   ```bash
+   git checkout -b minha-branch
+   ```
+3. Envie suas alterações:
+   ```bash
+   git commit -m "Minha contribuição"
+   git push origin minha-branch
+   ```
+4. Abra um Pull Request no GitHub.
 
-### Licença
-Este projeto está licenciado sob a Licença MIT.
-
+## Licença
+Este projeto é licenciado sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
