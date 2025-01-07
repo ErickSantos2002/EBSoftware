@@ -118,4 +118,4 @@ Contribuições são bem-vindas! Siga os passos abaixo:
 4. Abra um Pull Request no GitHub.
 
 ## Licença
-Este projeto é licenciado sob a licença MIT. Veja o arquivo [LICENSE](LICENSE.txt) para mais detalhes.
+Este projeto é licenciado sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.

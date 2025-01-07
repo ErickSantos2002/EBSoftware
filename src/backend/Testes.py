@@ -177,6 +177,7 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
                     print(f"Comando $START enviado para {'teste automático' if automatico else 'teste manual'}.")
                 except Exception as e:
                     if callback:
+                        # Emite erro para a thread principal
                         callback(f"ERRO-Falha ao enviar comando $START: {e}")
                     return
 
@@ -187,13 +188,21 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
                             respostas_vazias += 1
                             if respostas_vazias >= max_respostas_vazias:
                                 if callback:
+                                    # Emite erro para a thread principal
                                     callback("ERRO-Não foi possível conectar ao dispositivo (respostas vazias).")
                                 return
                             continue  # Continua aguardando respostas
 
                         respostas_vazias = 0  # Reseta o contador ao receber uma resposta válida
+
+                        # Chama o callback para todas as respostas relevantes
+                        if resposta.startswith("$"):
+                            if callback:
+                                callback(resposta)
+                                
                     except Exception as e:
                         if callback:
+                            # Emite erro para a thread principal
                             callback(f"ERRO-Falha ao ler resposta: {e}")
                         return
 
@@ -213,20 +222,20 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
                         )
                         print(f"Teste {'automático' if automatico else 'manual'} realizado: {resultado}")
 
+                        if callback:
+                            # Envia o resultado final para a thread principal
+                            callback(resultado)
+
                         if automatico and status == "HIGH":
                             print("Resultado HIGH encontrado. Parando testes automáticos.")
                             enviar_comando("$RESET")
                             executando_automatico = False
-                            if callback:
-                                callback(resultado)
-                            return
+                            return  
 
                         if automatico and status == "OK":
                             break
 
                         if not automatico:
-                            if callback:
-                                callback(resultado)
                             enviar_comando("$RESET")
                             executando_manual = False
                             return
@@ -237,6 +246,7 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
         except Exception as e:
             print(f"Erro durante o teste {'automático' if automatico else 'manual'}: {e}")
             if callback:
+                # Emite erro para a thread principal
                 callback(f"ERRO-{str(e)}")
         finally:
             try:
@@ -250,6 +260,7 @@ def executar_teste(id_usuario, nome, matricula, setor, automatico=False, callbac
     thread = Thread(target=executar, daemon=True)
     thread.start()
     print(f"Teste {'automático' if automatico else 'manual'} iniciado em thread separada.")
+
 
 # Funções para iniciar e parar os testes
 def iniciar_teste_manual(id_usuario, nome, matricula, setor):

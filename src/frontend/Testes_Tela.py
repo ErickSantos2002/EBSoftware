@@ -17,6 +17,19 @@ BASE_DIR = (
 )
 LOADING_GIF = os.path.join(BASE_DIR, "assets", "loading.gif")
 
+def atualizar_status_spinner(status_code):
+    """Mapeia os códigos de status do dispositivo para mensagens amigáveis."""
+    status_map = {
+        "T": "Inicializando teste...",
+        "$WAIT": "Aguardando...",
+        "$STANBY": "Pronto para o teste...",
+        "$TRIGGER": "Assoprando no dispositivo...",
+        "$BREATH": "Analisando o sopro...",
+        "$RESULT": "Processando resultado...",
+        "$END": "Teste concluído. Pronto para outro teste."
+    }
+    return status_map.get(status_code, "Teste em andamento...")
+
 # Centralização de estilos
 STYLES = {
     "input": "font-family: Arial; font-size: 12px; background-color: #f0f0f0; border: 1px solid #cccccc; padding: 5px;",
@@ -48,6 +61,8 @@ STYLES = {
 class TestesTela(QWidget):
     resultado_recebido = pyqtSignal(str)
     erro_recebido = pyqtSignal(str)
+    exibir_resultado = pyqtSignal(str)  # Novo sinal
+    atualizar_spinner = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -121,6 +136,8 @@ class TestesTela(QWidget):
         sinal_global.cadastros_atualizados.connect(self.carregar_cadastros)
         self.resultado_recebido.connect(self.mostrar_resultado)
         self.erro_recebido.connect(self.mostrar_erro)
+        self.exibir_resultado.connect(self.mostrar_resultado)
+        self.atualizar_spinner.connect(self.start_spinner)
 
     def init_search_bar(self, layout):
         """Cria a barra de pesquisa."""
@@ -244,12 +261,18 @@ class TestesTela(QWidget):
             QMessageBox.critical(self, "Erro", f"Erro ao iniciar o teste: {e}")
 
     def handle_test_result(self, resultado):
-        """Trata o resultado do teste."""
+        """Processa o resultado do teste ou atualiza o spinner."""
         if resultado.startswith("ERRO"):
             self.erro_recebido.emit(resultado.split("-", 1)[1])
+        elif resultado.startswith("$"):
+            # Atualiza o spinner com base no status intermediário
+            status_text = atualizar_status_spinner(resultado)
+            self.start_spinner(status_text)  # Chamada direta ao spinner na thread principal
         else:
-            self.resultado_recebido.emit(resultado)
-        
+            # Exibe o resultado apenas em testes manuais
+            if not self.tabs.currentIndex():  # Verifica se está na aba de Testes Manuais
+                self.exibir_resultado.emit(resultado)
+
         # Limpa a seleção após o teste
         self.tabela.clearSelection()
 
@@ -265,7 +288,7 @@ class TestesTela(QWidget):
 
     # Métodos para spinner e status
     def start_spinner(self, status_text):
-        """Inicia o spinner e exibe o status."""
+        """Inicia o spinner e exibe o status dinamicamente."""
         self.status_label.setText(f"Status: {status_text}")
         self.spinner.show()
         self.movie.start()
@@ -282,7 +305,7 @@ class TestesTela(QWidget):
         QMessageBox.critical(self, "Erro", mensagem)
 
     def mostrar_resultado(self, resultado):
-        """Exibe o resultado do teste."""
+        """Exibe o resultado final do teste."""
         self.stop_spinner()
         try:
             quantidade, status = resultado.split("-")
