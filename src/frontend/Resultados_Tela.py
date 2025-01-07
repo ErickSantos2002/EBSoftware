@@ -110,13 +110,13 @@ class ResultadosTela(QWidget):
         btn_aplicar_filtros = self.create_button("Aplicar Filtros", callback=self.aplicar_filtros)
 
         # Botão para carregar mais registros
-        btn_carregar_mais = self.create_button(
+        self.btn_carregar_mais = self.create_button(
             "Carregar Mais", callback=self.carregar_mais_registros
         )
 
         # Aplica o estilo azul diretamente
         btn_aplicar_filtros.setStyleSheet(STYLES["btn_filtros"])
-        btn_carregar_mais.setStyleSheet(STYLES["btn_filtros"])
+        self.btn_carregar_mais.setStyleSheet(STYLES["btn_filtros"])
 
         # Adiciona widgets ao layout de filtros
         filtros_layout.addWidget(self.periodo_todos)
@@ -130,7 +130,7 @@ class ResultadosTela(QWidget):
         filtros_layout.addWidget(QLabel("Status:"))
         filtros_layout.addWidget(self.combo_status)
         filtros_layout.addWidget(btn_aplicar_filtros)
-        filtros_layout.addWidget(btn_carregar_mais)
+        filtros_layout.addWidget(self.btn_carregar_mais)
 
         layout.addLayout(filtros_layout)
 
@@ -231,6 +231,12 @@ class ResultadosTela(QWidget):
                 item.setTextAlignment(Qt.AlignCenter)
                 self.tabela.setItem(row, col, item)
 
+        # Verifica se todos os registros foram carregados e oculta o botão se necessário
+        if limite >= total_registros:
+            self.btn_carregar_mais.hide()  # Oculta o botão
+        else:
+            self.btn_carregar_mais.show()  # Mostra o botão caso existam mais registros
+
         # Adiciona um aviso ao usuário sobre o limite
         if total_registros > limite:
             QMessageBox.information(
@@ -270,7 +276,7 @@ class ResultadosTela(QWidget):
             if periodo:
                 try:
                     # Extrai e converte a data com validação
-                    data_teste_str = resultado["Data e Hora"].split()[0]
+                    data_teste_str = resultado["Data e hora"].split()[0]
                     data_teste = QDate.fromString(data_teste_str, "dd/MM/yyyy")  # Formato ajustado para PyQt5
                     if not data_teste.isValid():
                         print(f"Data inválida ignorada: {data_teste_str}")
@@ -345,9 +351,4 @@ class ResultadosTela(QWidget):
     def carregar_mais_registros(self):
         """Aumenta o limite de registros exibidos na tabela."""
         self.limite_exibicao += 100  # Incrementa o limite em 100
-
-        if self.limite_exibicao >= len(self.resultados):
-            self.limite_exibicao = len(self.resultados)
-            self.btn_carregar_mais.hide()  # Oculta o botão quando tudo for carregado
-
         self.carregar_tabela(self.resultados, self.limite_exibicao)

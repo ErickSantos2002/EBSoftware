@@ -3,9 +3,15 @@
 ## Descrição
 O EBS-010 é um software desenvolvido para gerenciar dispositivos de teste de álcool com foco em segurança no trabalho. Ele utiliza comunicação serial para se conectar a dispositivos de medição, gerencia cadastros e resultados, e oferece uma interface gráfica amigável construída com PyQt5.
 
+![Logo](assets/Logo.png)
+
+Com uma interface intuitiva e funcionalidades avançadas, o EBS-010 é ideal para empresas que buscam simplicidade, praticidade e rapidez nos testes, sem a necessidade de conexão com a internet. Além disso, permite importar e exportar informações via Excel, garantindo flexibilidade e eficiência.
+
+---
+
 ## Funcionalidades
 
-### Principais Recursos:
+### Principais Recursos
 1. **Gestão de Cadastros**:
    - Cadastrar, editar e apagar usuários.
    - Importar e exportar cadastros em formato Excel.
@@ -27,6 +33,21 @@ O EBS-010 é um software desenvolvido para gerenciar dispositivos de teste de á
 5. **Informações do Aparelho**:
    - Consulta e armazenamento de limites e informações do dispositivo.
 
+---
+
+## Capturas de Tela
+
+### Interface Principal
+![Interface Principal](assets/Interface_principal.jpg)
+
+### Resultados
+![Interface Resultados](assets/Interface_resultados.jpg)
+
+### Testes
+![Interface Testes](assets/Interface_testes.jpg)
+
+---
+
 ## Requisitos
 
 ### Sistema Operacional
@@ -47,9 +68,16 @@ Instale as dependências utilizando o comando:
 pip install -r requirements.txt
 ```
 
+### Driver Necessário
+É necessário instalar o **driver da Silicon Labs** para que o software funcione corretamente.
+
+[Baixe o driver aqui](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
+
+---
+
 ## Estrutura do Projeto
 
-```
+```plaintext
 EBS-010
 ├── main.py                # Ponto de entrada principal.
 ├── src/
@@ -74,6 +102,8 @@ EBS-010
 ├── requirements.txt      # Lista de dependências.
 └── README.md             # Documentação.
 ```
+
+---
 
 ## Uso
 
@@ -103,6 +133,13 @@ EBS-010
 1. Use a interface de resultados para filtrar e visualizar os registros.
 2. Exporte os resultados em formato Excel ou PDF conforme necessário.
 
+---
+
+## Documentação Adicional
+Para informações técnicas detalhadas sobre o aparelho, consulte a [documentação oficial](https://www.healthsafety.com.br/ebs010.cfm).
+
+---
+
 ## Contribuindo
 Contribuições são bem-vindas! Siga os passos abaixo:
 1. Faça um fork deste repositório.
@@ -116,6 +153,13 @@ Contribuições são bem-vindas! Siga os passos abaixo:
    git push origin minha-branch
    ```
 4. Abra um Pull Request no GitHub.
+
+---
+
+## Suporte
+Em caso de dúvidas ou problemas, entre em contato pelo e-mail: **healthsafetyti01@gmail.com**
+
+---
 
 ## Licença
 Este projeto é licenciado sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
