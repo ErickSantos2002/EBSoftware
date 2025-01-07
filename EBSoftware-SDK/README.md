@@ -1,6 +1,6 @@
-# EBS-010 SDK
+# EBSoftware SDK
 
-O **EBS-010 SDK** foi desenvolvido para facilitar a integração com o software EBS-010. Este SDK permite que os usuários interajam diretamente com o banco de dados local, executem testes, configurem dispositivos, gerenciem cadastros e obtenham resultados de forma eficiente.
+O **EBSoftware SDK** foi desenvolvido para facilitar a integração com o software EBS-010. Este SDK permite que os usuários interajam diretamente com o banco de dados local, executem testes, configurem dispositivos, gerenciem cadastros e obtenham resultados de forma eficiente.
 
 ## Estrutura do SDK
 

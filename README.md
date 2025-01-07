@@ -1,7 +1,7 @@
-# EBS-010 Software
+# EBsoftware
 
 ## Descrição
-O EBS-010 é um software desenvolvido para gerenciar dispositivos de teste de álcool com foco em segurança no trabalho. Ele utiliza comunicação serial para se conectar a dispositivos de medição, gerencia cadastros e resultados, e oferece uma interface gráfica amigável construída com PyQt5.
+O EBsoftware é um software desenvolvido para gerenciar dispositivos de teste de álcool com foco em segurança no trabalho. Ele utiliza comunicação serial para se conectar a dispositivos de medição, gerencia cadastros e resultados, e oferece uma interface gráfica amigável construída com PyQt5.
 
 ![Logo](assets/Logo.png)
 
@@ -78,7 +78,7 @@ pip install -r requirements.txt
 ## Estrutura do Projeto
 
 ```plaintext
-EBS-010
+EBSoftware
 ├── main.py                # Ponto de entrada principal.
 ├── src/
 │   ├── backend/
