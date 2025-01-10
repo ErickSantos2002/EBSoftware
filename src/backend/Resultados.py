@@ -1,7 +1,10 @@
 import os
 import sys
-import csv
 import pandas as pd
+import tempfile
+import configparser
+from docx import Document
+from win32com.client import Dispatch
 from datetime import datetime
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
@@ -14,10 +17,69 @@ else:
     # Diretório raiz do projeto (quando executado como script)
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RESOURCES_DIR = os.path.join(BASE_DIR, "resources")  # Caminho do diretório resources
+INFO_FILE = os.path.join(RESOURCES_DIR, "info.ini")
 
 # Caminho do arquivo específico
 ARQUIVO_RESULTADOS = os.path.join(RESOURCES_DIR, "Resultados.csv")
 
+def gerar_laudo(data_emissao, nome, matricula, setor, data_teste, resultado, unidade, limite_baixo, limite_alto, numero_testes, save_path):
+    """Gera um laudo técnico em PDF com base no arquivo temporário."""
+    try:
+        # Caminho do modelo de laudo
+        modelo_docx = os.path.join(RESOURCES_DIR, "Modelo Laudo.docx")
+        if not os.path.exists(modelo_docx):
+            raise FileNotFoundError(f"Modelo de Laudo não encontrado em: {modelo_docx}")
+
+        # Criar uma cópia temporária do modelo
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as temp_docx:
+            temp_docx_path = temp_docx.name
+        doc = Document(modelo_docx)
+
+        # Substituir os placeholders no arquivo temporário
+        placeholders = {
+            "{{data_hora_emissao}}": data_emissao,
+            "{{nome_usuario}}": nome,
+            "{{matricula_usuario}}": matricula,
+            "{{setor_usuario}}": setor,
+            "{{data_hora_teste}}": data_teste,
+            "{{resultado_teste}}": resultado,
+            "{{unidade}}": unidade,
+            "{{limite_baixo}}": limite_baixo,
+            "{{limite_alto}}": limite_alto,
+            "{{numero_testes}}": numero_testes,
+        }
+
+        for p in doc.paragraphs:
+            for placeholder, value in placeholders.items():
+                if placeholder in p.text:
+                    p.text = p.text.replace(placeholder, value)
+
+        # Substituir placeholders em tabelas (se houver)
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for placeholder, value in placeholders.items():
+                        if placeholder in cell.text:
+                            cell.text = cell.text.replace(placeholder, value)
+
+        # Salvar o documento temporário com as alterações
+        doc.save(temp_docx_path)
+
+        # Converter o Word temporário para PDF mantendo o layout
+        word = Dispatch("Word.Application")
+        doc = word.Documents.Open(temp_docx_path)
+        doc.SaveAs(save_path, FileFormat=17)  # 17 = wdFormatPDF
+        doc.Close()
+        word.Quit()
+
+        # Remover o arquivo temporário
+        os.remove(temp_docx_path)
+
+        return save_path
+    except Exception as e:
+        raise Exception(f"Erro ao gerar o laudo: {e}")
+
+    
 def carregar_resultados():
     """Carrega resultados do banco de dados."""
     with conectar() as conn:

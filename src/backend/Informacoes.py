@@ -18,7 +18,7 @@ INFO_FILE = os.path.join(RESOURCES_DIR, "info.ini")
 # Função para inicializar o serial com base no config.ini
 def inicializar_serial():
     """Inicializa a comunicação serial com base na porta configurada."""
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)  # Desabilitar interpolação
     if not os.path.exists(CONFIG_FILE):
         raise Exception("Arquivo config.ini não encontrado. Configure a porta primeiro.")
     
@@ -61,7 +61,7 @@ def enviar_comando_recall():
                 unidade_traduzida = {"M": "Mg/L", "B": "%BAC", "G": "g/L"}.get(unidade, unidade)
 
                 # Salvar as informações em info.ini
-                info_config = configparser.ConfigParser()
+                info_config = configparser.ConfigParser(interpolation=None)  # Desabilitar interpolação
                 info_config["Info"] = {
                     "Unidade": unidade_traduzida,
                     "Limite_Baixo": low,
@@ -81,7 +81,7 @@ def enviar_comando_recall():
 # Função para carregar as informações do arquivo info.ini
 def carregar_informacoes():
     """Carrega as informações salvas no arquivo info.ini."""
-    info_config = configparser.ConfigParser()
+    info_config = configparser.ConfigParser(interpolation=None)  # Desabilitar interpolação
     if not os.path.exists(INFO_FILE):
         return None
     info_config.read(INFO_FILE)

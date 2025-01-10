@@ -1,10 +1,26 @@
+import os
+import sys
+import configparser
+from docx import Document
+from win32com.client import Dispatch
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem,
     QFileDialog, QLabel, QComboBox, QDateEdit, QLineEdit, QMessageBox, QFrame, QHeaderView
 )
-from PyQt5.QtCore import Qt, QDate, pyqtSignal
+from PyQt5.QtCore import Qt, QDate, pyqtSignal,QDateTime
 
-from src.backend.Resultados import carregar_resultados, salvar_em_excel, salvar_em_pdf
+from src.backend.Resultados import carregar_resultados, salvar_em_excel, salvar_em_pdf, gerar_laudo
+
+if getattr(sys, 'frozen', False):
+    # Diretório do executável (PyInstaller)
+    BASE_DIR = os.path.join(sys._MEIPASS)
+else:
+    # Diretório base para execução no modo script
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+# Diretório resources no local correto
+RESOURCES_DIR = os.path.join(BASE_DIR, "resources")
+INFO_FILE = os.path.join(RESOURCES_DIR, "info.ini")
 
 # Centralização de estilos
 STYLES = {
@@ -167,6 +183,8 @@ class ResultadosTela(QWidget):
                 padding: 5px;
             }
         """)
+
+        self.tabela.cellDoubleClicked.connect(self.emitir_laudo)
 
         # Adiciona a tabela ao layout
         layout.addWidget(self.tabela)
@@ -352,3 +370,43 @@ class ResultadosTela(QWidget):
         """Aumenta o limite de registros exibidos na tabela."""
         self.limite_exibicao += 100  # Incrementa o limite em 100
         self.carregar_tabela(self.resultados, self.limite_exibicao)
+
+    def emitir_laudo(self, row, column):
+        """Permite ao usuário gerar e salvar o laudo em PDF."""
+        try:
+            # Obter os dados da linha selecionada
+            data_emissao = QDateTime.currentDateTime().toString("dd/MM/yyyy HH:mm:ss")
+            nome = self.tabela.item(row, 2).text()
+            matricula = self.tabela.item(row, 3).text()
+            setor = self.tabela.item(row, 4).text()
+            data_teste = self.tabela.item(row, 5).text()
+            resultado = self.tabela.item(row, 6).text()
+
+            # Carregar informações do aparelho
+            config = configparser.ConfigParser(interpolation=None)  # Desabilitar interpolação
+            config.read(INFO_FILE)
+            unidade = config.get("Info", "unidade", fallback="Não disponível")
+            limite_baixo = config.get("Info", "limite_baixo", fallback="Não disponível")
+            limite_alto = config.get("Info", "limite_alto", fallback="Não disponível")
+            numero_testes = config.get("Info", "numero_teste", fallback="Não disponível")
+
+            # Abrir diálogo para salvar o PDF
+            save_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Salvar Laudo como PDF",
+                f"Laudo_{nome}_{data_teste.replace('/', '-')}.pdf",
+                "Arquivos PDF (*.pdf)"
+            )
+
+            if not save_path:
+                QMessageBox.warning(self, "Ação Cancelada", "Nenhum local foi selecionado para salvar o laudo.")
+                return
+
+            # Gerar o laudo
+            gerar_laudo(data_emissao, nome, matricula, setor, data_teste, resultado,
+                        unidade, limite_baixo, limite_alto, numero_testes, save_path)
+
+            QMessageBox.information(self, "Sucesso", f"Laudo salvo com sucesso em: {save_path}")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", str(e))
