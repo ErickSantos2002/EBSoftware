@@ -1,5 +1,4 @@
 import os
-import serial
 import serial.tools.list_ports
 import configparser
 import sys
@@ -18,6 +17,7 @@ CONFIG_FILE = os.path.join(RESOURCES_DIR, "config.ini")
 print("Diretorio base: " + BASE_DIR)
 print("Diretorios resources: " + RESOURCES_DIR)
 
+
 def salvar_porta_configurada(porta):
     """Salva a porta no arquivo de configuração."""
     # Garante que o diretório resources existe
@@ -30,38 +30,35 @@ def salvar_porta_configurada(porta):
         config.write(configfile)
     print(f"Porta {porta} salva no arquivo de configuração.")
 
+
 def buscar_porta_automatica():
-    """Busca automaticamente a porta Silicon Labs e ajusta o baudrate para 4800."""
+    """Busca automaticamente a porta Silicon Labs."""
     ports = serial.tools.list_ports.comports()
     for port in ports:
         if "Silicon Labs" in port.description:
-            # Ajusta o baudrate da porta detectada
-            try:
-                configurar_baudrate(port.device, 4800)
-                return port.device
-            except Exception as e:
-                print(f"Erro ao configurar a porta {port.device}: {e}")
+            print(f"Porta automática encontrada: {port.device}")
+            return port.device
+    print("Nenhuma porta Silicon Labs encontrada.")
     return None
 
-def configurar_baudrate(porta, baudrate):
-    """Configura o baudrate da porta especificada."""
-    try:
-        with serial.Serial(port=porta, baudrate=baudrate) as ser:
-            print(f"Baudrate configurado para {baudrate} na porta {porta}.")
-    except Exception as e:
-        print(f"Erro ao configurar baudrate na porta {porta}: {e}")
-        raise
 
 def carregar_porta_configurada():
     """Carrega a porta configurada a partir do arquivo de configuração."""
     config = configparser.ConfigParser()
     if config.read(CONFIG_FILE) and "Serial" in config and "porta" in config["Serial"]:
         porta = config["Serial"]["porta"]
-        try:
-            # Configura o baudrate para 4800 na porta carregada
-            configurar_baudrate(porta, 4800)
-            return porta
-        except Exception as e:
-            print(f"Erro ao configurar baudrate na porta {porta}: {e}")
-            return None
+        print(f"Porta configurada carregada: {porta}")
+        return porta
+    print("Nenhuma porta configurada encontrada.")
     return None
+
+
+# Exemplo de uso
+if __name__ == "__main__":
+    # Buscar porta automaticamente
+    porta_automatica = buscar_porta_automatica()
+    if porta_automatica:
+        salvar_porta_configurada(porta_automatica)
+    else:
+        # Carregar porta previamente configurada
+        porta_configurada = carregar_porta_configurada()
