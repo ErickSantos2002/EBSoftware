@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
     QFileDialog, QLabel, QComboBox, QDateEdit, QLineEdit, QMessageBox, QFrame, QHeaderView
 )
 from PyQt5.QtCore import Qt, QDate, pyqtSignal,QDateTime
-
+from src.backend.Testes import sinal_global
 from src.backend.Resultados import carregar_resultados, salvar_em_excel, salvar_em_pdf, gerar_laudo
 
 if getattr(sys, 'frozen', False):
@@ -71,7 +71,7 @@ class ResultadosTela(QWidget):
 
         self.resultados = carregar_resultados()  # Carrega os resultados inicialmente
         self.setup_ui()
-        self.connect_signals()
+        sinal_global.resultado_atualizado.connect(self.atualizar_tabela)
         self.carregar_tabela(self.resultados)
         self.limite_exibicao = 100  # Começa exibindo os primeiros 100 registros
 
@@ -325,6 +325,8 @@ class ResultadosTela(QWidget):
             filtrados.append(resultado)
 
         # Recarrega a tabela com os resultados filtrados
+        self.limite_exibicao = 100
+        self.atualizar_tabela()
         self.carregar_tabela(filtrados)
 
     def salvar_excel(self):
@@ -364,7 +366,8 @@ class ResultadosTela(QWidget):
     def atualizar_tabela(self):
         """Recarrega os resultados e atualiza a tabela."""
         self.resultados = carregar_resultados()
-        self.carregar_tabela(self.resultados)
+        self.limite_exibicao = 100
+        self.carregar_tabela(self.resultados, self.limite_exibicao)
     
     def carregar_mais_registros(self):
         """Aumenta o limite de registros exibidos na tabela."""

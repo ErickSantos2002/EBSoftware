@@ -2,6 +2,17 @@ import sys
 import os
 from PyQt5.QtWidgets import QApplication
 from src.frontend.Interface import MainWindow  # Interface principal
+from src.frontend.Cadastros_Tela import CadastrosTela
+from src.frontend.Testes_Tela import TestesTela
+from src.frontend.Resultados_Tela import ResultadosTela
+from src.frontend.Configuracoes_Tela import ConfiguracoesTela
+from src.frontend.Informacoes_Tela import InformacoesTela
+import src.backend.Cadastros
+import src.backend.Configuracoes
+import src.backend.db
+import src.backend.Informacoes
+import src.backend.Resultados
+import src.backend.Testes
 
 # Determina o caminho base do projeto
 BASE_DIR = (

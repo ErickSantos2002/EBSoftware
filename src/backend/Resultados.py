@@ -19,9 +19,6 @@ else:
 RESOURCES_DIR = os.path.join(BASE_DIR, "resources")  # Caminho do diretório resources
 INFO_FILE = os.path.join(RESOURCES_DIR, "info.ini")
 
-# Caminho do arquivo específico
-ARQUIVO_RESULTADOS = os.path.join(RESOURCES_DIR, "Resultados.csv")
-
 def gerar_laudo(data_emissao, nome, matricula, setor, data_teste, resultado, unidade, limite_baixo, limite_alto, numero_testes, save_path):
     """Gera um laudo técnico em PDF com base no arquivo temporário."""
     try:
@@ -154,7 +151,7 @@ def salvar_em_pdf(resultados, caminho_arquivo):
     c.drawString(30, altura - 40, "Registros de Resultados EBS010")
 
     # Cabeçalhos
-    colunas = ["ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Qtd. Álcool", "Status"]
+    colunas = ["ID do teste", "ID do usuário", "Nome", "Matrícula", "Setor", "Data e hora", "Quantidade de Álcool", "Status"]
     larguras_colunas = [60, 80, 100, 90, 90, 160, 90, 80]
     c.setFont("Helvetica-Bold", 10)
     y = altura - 70
