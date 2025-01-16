@@ -5,7 +5,7 @@ DefaultDirName={pf}\EBSoftware
 DefaultGroupName=EBSoftware
 OutputBaseFilename=EBSoftware_Setup
 SetupIconFile=assets\HS2.ico
-LicenseFile=C:\Users\pc\Documents\GitHub\SoftwareEBS\LICENSE
+LicenseFile=C:\Users\pc\Documents\GitHub\SoftwareEBS\LICENSE.txt
 Compression=lzma
 SolidCompression=yes
 
