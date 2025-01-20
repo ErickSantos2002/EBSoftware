@@ -9,6 +9,9 @@ LicenseFile=C:\Users\pc\Documents\GitHub\SoftwareEBS\LICENSE.txt
 Compression=lzma
 SolidCompression=yes
 
+[Languages]
+Name: "portuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
+
 [Files]
 Source: "dist\EBSoftware\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "C:\Users\pc\Documents\GitHub\SoftwareEBS\CP210x_Windows_Drivers\*"; DestDir: "{app}\CP210x_Windows_Drivers"; Flags: ignoreversion recursesubdirs createallsubdirs
